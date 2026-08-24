@@ -31,6 +31,9 @@ def analyze_ip(ip, db_session=None):
     total_reports = 0
     country = "N/A"
     isp = "Unknown"
+    domain = ""
+    usage_type = ""
+    hostnames = []
     
     api_key = getattr(Config, "ABUSEIPDB_API_KEY", "")
     if api_key:
@@ -52,12 +55,18 @@ def analyze_ip(ip, db_session=None):
                 total_reports = data.get("totalReports", 0)
                 country = data.get("countryCode", "N/A")
                 isp = data.get("isp", "Unknown")
+                domain = data.get("domain", "")
+                usage_type = data.get("usageType", "")
+                abuse_hostnames = data.get("hostnames", [])
+                if isinstance(abuse_hostnames, list):
+                    hostnames = abuse_hostnames
         except Exception:
             pass
 
     # 2. Query Shodan API
     open_ports = []
     vulnerabilities = []
+    org = "Unknown"
     
     shodan_key = getattr(Config, "SHODAN_API_KEY", "")
     if shodan_key:
@@ -65,6 +74,7 @@ def analyze_ip(ip, db_session=None):
             api = shodan.Shodan(shodan_key)
             host_info = api.host(ip)
             open_ports = host_info.get("ports", [])
+            org = host_info.get("org", "Unknown")
             
             vulns = host_info.get("vulns", [])
             if isinstance(vulns, dict):
@@ -76,6 +86,12 @@ def analyze_ip(ip, db_session=None):
                 country = host_info.get("country_name", "N/A")
             if isp == "Unknown":
                 isp = host_info.get("isp", "Unknown")
+            
+            # Merge Shodan hostnames with AbuseIPDB hostnames (deduplicated)
+            shodan_hostnames = host_info.get("hostnames", [])
+            if isinstance(shodan_hostnames, list):
+                merged = list(dict.fromkeys(hostnames + shodan_hostnames))
+                hostnames = merged
         except (shodan.APIError, Exception):
             # If Shodan has no data for the IP or errors out, keep shodan fields empty
             open_ports = []
@@ -83,6 +99,11 @@ def analyze_ip(ip, db_session=None):
 
     # 3. Calculate risk level
     risk_level = calculate_risk_level(abuse_score)
+
+    # 3b. Add note for Google Public DNS
+    note = ""
+    if ("google" in isp.lower()) or ("google.com" in domain.lower()):
+        note = "Google Public DNS Server"
 
     # 4. Save results to database (IPReport and SearchHistory)
     session = db_session if db_session is not None else SessionLocal()
@@ -119,6 +140,11 @@ def analyze_ip(ip, db_session=None):
         "total_reports": total_reports,
         "country": country,
         "isp": isp,
+        "org": org if org != "Unknown" else isp,
+        "domain": domain,
+        "usage_type": usage_type,
+        "hostnames": hostnames,
+        "note": note,
         "open_ports": open_ports,
         "vulnerabilities": vulnerabilities,
         "risk_level": risk_level

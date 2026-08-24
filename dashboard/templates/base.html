@@ -1,45 +1,584 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ThreatOps — Real-time IP Threat Intelligence{% endblock %}</title>
-    <!-- Google Fonts: Inter -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>ThreatOps</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: #111111;
+            border-right: 1px solid #1e1e1e;
+            display: flex;
+            flex-direction: column;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            left: -240px;
+            top: 0;
+            transition: left 0.3s ease;
+            z-index: 100;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-brand {
+            padding: 0 20px 24px 20px;
+            border-bottom: 1px solid #1e1e1e;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .sidebar-brand span {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: -0.02em;
+        }
+
+        .sidebar-nav {
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-grow: 1;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #888;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-nav a:hover {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .sidebar-nav a.active {
+            background: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .sidebar-nav .nav-icon {
+            width: 18px;
+            height: 18px;
+            opacity: 0.6;
+        }
+
+        .sidebar-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #1e1e1e;
+            font-size: 12px;
+            color: #444;
+        }
+
+        /* OVERLAY */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* TOP BAR */
+        .topbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #0a0a0a;
+            border-bottom: 1px solid #1a1a1a;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 16px;
+            z-index: 50;
+        }
+
+        /* ROUND MENU BUTTON */
+        .menu-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            flex-shrink: 0;
+        }
+
+        .menu-btn:hover {
+            background: #222;
+        }
+
+        .menu-btn svg {
+            width: 16px;
+            height: 16px;
+            stroke: #888;
+        }
+
+        .topbar-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            letter-spacing: -0.01em;
+        }
+
+        .topbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #111;
+            border: 1px solid #1e1e1e;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: #555;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* MAIN CONTENT */
+        .main {
+            margin-top: 56px;
+            padding: 32px;
+            width: 100%;
+            min-height: calc(100vh - 56px);
+        }
+
+        /* CARDS */
+        .card {
+            background: #111111;
+            border: 1px solid #1e1e1e;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: #555;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-primary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #888;
+            border: 1px solid #2a2a2a;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-secondary:hover {
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        /* INPUT */
+        .input-field {
+            background: #0d0d0d;
+            border: 1px solid #1e1e1e;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            width: 100%;
+            outline: none;
+            transition: border 0.15s;
+        }
+
+        .input-field:focus {
+            border-color: #333;
+        }
+
+        .input-field::placeholder {
+            color: #333;
+        }
+
+        /* TABLE */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            text-align: left;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            color: #444;
+            text-transform: uppercase;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .data-table td {
+            padding: 12px 12px;
+            border-bottom: 1px solid #141414;
+            color: #ccc;
+        }
+
+        .data-table tr:hover td {
+            background: #111;
+        }
+
+        /* BADGES */
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .badge-critical {
+            background: #2d0a0a;
+            color: #f87171;
+            border: 1px solid #3d1010;
+        }
+
+        .badge-high {
+            background: #2d1a0a;
+            color: #fb923c;
+            border: 1px solid #3d2510;
+        }
+
+        .badge-medium {
+            background: #2d2a0a;
+            color: #fbbf24;
+            border: 1px solid #3d3510;
+        }
+
+        .badge-low {
+            background: #0a2d0a;
+            color: #4ade80;
+            border: 1px solid #103d10;
+        }
+
+        .badge-port {
+            background: #111;
+            color: #888;
+            border: 1px solid #222;
+        }
+
+        /* AI ANALYSIS */
+        .ai-box {
+            background: #0d0d0d;
+            border-left: 2px solid #2a2a2a;
+            border-radius: 0 8px 8px 0;
+            padding: 20px 24px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: #aaa;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .ai-box h3 {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 16px 0 6px 0;
+        }
+
+        .ai-box h3:first-child {
+            margin-top: 0;
+        }
+
+        .ai-box p {
+            margin-bottom: 12px;
+            color: #999;
+        }
+
+        .ai-box strong {
+            color: #ddd;
+            font-weight: 600;
+        }
+
+        /* SCANNING ANIMATION */
+        .scan-progress {
+            background: #111;
+            border: 1px solid #1e1e1e;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            display: none;
+        }
+
+        .scan-progress.show {
+            display: block;
+        }
+
+        .scan-spinner {
+            width: 32px;
+            height: 32px;
+            border: 2px solid #1e1e1e;
+            border-top-color: #888;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .scan-label {
+            font-size: 13px;
+            color: #555;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* GRID */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+
+            .grid-2,
+            .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* STAT CARD */
+        .stat-card {
+            background: #111;
+            border: 1px solid #1e1e1e;
+            border-radius: 10px;
+            padding: 16px 20px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-sub {
+            font-size: 12px;
+            color: #444;
+            margin-top: 4px;
+        }
+    </style>
 </head>
+
 <body>
 
-    <!-- Clean Modern Navbar -->
-    <nav class="navbar-clean">
-        <a href="/" class="brand-clean">
-            <span class="logo-square"></span>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
             <span>ThreatOps</span>
-        </a>
-        <div class="nav-links-clean">
-            <a href="/history" class="nav-link-clean">History</a>
         </div>
-    </nav>
+        <nav class="sidebar-nav">
+            <a href="/" {% if request.endpoint in ['home', 'index', 'dashboard'] %}class="active" {% endif %}>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7" />
+                    <rect x="14" y="3" width="7" height="7" />
+                    <rect x="14" y="14" width="7" height="7" />
+                    <rect x="3" y="14" width="7" height="7" />
+                </svg>
+                Dashboard
+            </a>
+            <a href="/scan" {% if request.endpoint in ['scanner', 'scan', 'scan_ip', 'scan_local'] %}class="active" {% endif %}>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                </svg>
+                IP Scanner
+            </a>
+            <a href="/logs" {% if request.endpoint in ['logs', 'log_analyzer'] %}class="active" {% endif %}>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                </svg>
+                Log Analyzer
+            </a>
+            <a href="/history" {% if request.endpoint=='history' %}class="active" {% endif %}>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                </svg>
+                History
+            </a>
+            <a href="/reports" {% if request.endpoint=='reports' %}class="active" {% endif %}>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                </svg>
+                Reports
+            </a>
+            <a href="/settings" {% if request.endpoint=='settings' %}class="active" {% endif %}>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                Settings
+            </a>
+        </nav>
+        <div class="sidebar-footer">ThreatOps v1.0 · Educational Use</div>
+    </div>
 
-    <!-- Main Container -->
-    <main class="main-container-clean">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="flash-msg">{{ message }}</div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
+    <!-- Top Bar -->
+    <div class="topbar">
+        <button class="menu-btn" onclick="toggleSidebar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6" stroke="currentColor" />
+                <line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" />
+                <line x1="3" y1="18" x2="21" y2="18" stroke="currentColor" />
+            </svg>
+        </button>
+        <span class="topbar-title">ThreatOps</span>
+        <div class="topbar-right">
+            <div class="status-pill">
+                <div class="status-dot"></div>
+                Systems Online
+            </div>
+        </div>
+    </div>
 
+    <!-- Main Content -->
+    <div class="main">
         {% block content %}{% endblock %}
-    </main>
+    </div>
 
-    <!-- Clean Footer -->
-    <footer class="footer-clean">
-        <span>© 2026 ThreatOps • Real-time Threat Intelligence</span>
-    </footer>
-
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+        }
+    </script>
+    {% block scripts %}{% endblock %}
 </body>
+
 </html>

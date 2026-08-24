@@ -46,16 +46,17 @@ def get_local_ip() -> str:
         return "127.0.0.1"
 
 
-def scan_target(target_ip: str) -> dict:
+def scan_target(target_ip: str, arguments: str = "-F -T4") -> dict:
     """
-    Run an nmap service-version scan against a target IP address.
+    Run an nmap port/service scan against a target IP address.
 
-    Scan arguments used:
-        -sV                  Service/version detection
-        --version-intensity 5  Medium-high probe intensity (0-9 scale)
+    Scan arguments used by default:
+        -F   Fast mode: scan top 100 most common ports
+        -T4  Aggressive timing for faster execution
 
     Args:
         target_ip: IPv4 address or hostname to scan (e.g. "192.168.1.1").
+        arguments: Nmap scan flags/arguments (defaults to "-F -T4").
 
     Returns:
         A dict with the following keys:
@@ -68,7 +69,7 @@ def scan_target(target_ip: str) -> dict:
                             - service_name   (str)  Detected service name.
                             - service_version(str)  Detected version string.
             error       (str)  Present only when scanning fails; describes
-                               what went wrong.
+                                what went wrong.
     """
     scan_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -107,7 +108,7 @@ def scan_target(target_ip: str) -> dict:
     # Run the scan
     # ------------------------------------------------------------------
     try:
-        nm.scan(hosts=target_ip, arguments="-sV --version-intensity 5")
+        nm.scan(hosts=target_ip, arguments=arguments)
     except nmap.PortScannerError as exc:
         return {
             "target_ip": target_ip,

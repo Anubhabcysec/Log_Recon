@@ -80,7 +80,41 @@
             {{ result.isp if result else 'Unknown' }}
         </div>
     </div>
+
+    {% if result and result.domain %}
+    <!-- Card 5: Domain -->
+    <div class="stat-card">
+        <div class="card-icon">🔗</div>
+        <div class="card-title" style="font-size: 0.9rem; color: var(--text-grey);">DOMAIN</div>
+        <div style="font-size: 1.25rem; font-weight: bold; color: var(--text-white); word-break: break-word;">
+            {{ result.domain }}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if result and result.hostnames %}
+    <!-- Card 6: Hostnames -->
+    <div class="stat-card">
+        <div class="card-icon">🖥️</div>
+        <div class="card-title" style="font-size: 0.9rem; color: var(--text-grey);">HOSTNAMES</div>
+        <div style="font-size: 1rem; font-weight: bold; color: var(--text-white); word-break: break-word;">
+            {% for hostname in result.hostnames %}
+                <span style="display: inline-block; background: rgba(255, 34, 51, 0.1); border: 1px solid #222; padding: 0.2rem 0.6rem; border-radius: 3px; margin: 0.15rem 0.25rem 0.15rem 0; font-size: 0.9rem;">{{ hostname }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 </div>
+
+{% if result and result.note %}
+<!-- Google DNS / Special Note Banner -->
+<div class="stat-card" style="margin-bottom: 2.5rem; margin-top: -1rem; border-left: 4px solid #ffc822; background: rgba(255, 200, 34, 0.05);">
+    <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 1.25rem;">ℹ️</span>
+        <span style="color: #ffc822; font-weight: 600; font-size: 0.95rem; letter-spacing: 0.5px;">{{ result.note }}</span>
+    </div>
+</div>
+{% endif %}
 
 <!-- Surface Analysis: Open Ports & Vulnerabilities -->
 <div class="threats-section" style="margin-bottom: 2rem;">

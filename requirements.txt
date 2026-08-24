@@ -10,3 +10,5 @@ groq
 reportlab
 flask-sse
 redis
+python-evtx
+chardet

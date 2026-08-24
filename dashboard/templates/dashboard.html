@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto; color: #e6edf3;">
+
+    <!-- 1. Header -->
+    <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 6px;">
+            Welcome to ThreatOps
+        </h1>
+        <p style="font-size: 14px; color: #8b949e;">
+            Real-time IP threat intelligence and vulnerability analysis
+        </p>
+    </div>
+
+    <!-- 2. Quote Block -->
+    <div style="background: #161b22; border-left: 4px solid #2f81f7; border-radius: 6px; padding: 14px 18px; margin-bottom: 32px;">
+        <p style="font-style: italic; color: #c9d1d9; font-size: 14px; margin: 0; line-height: 1.5;">
+            "In cybersecurity, visibility is everything. Know your exposure before attackers do."
+        </p>
+    </div>
+
+    <!-- 3. Core Capabilities -->
+    <div style="margin-bottom: 36px;">
+        <div style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #8b949e; margin-bottom: 16px;">
+            Core Capabilities
+        </div>
+        <div class="grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+            
+            <!-- Card 1: IP Threat Analysis -->
+            <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s ease;">
+                <div>
+                    <div style="width: 36px; height: 36px; border-radius: 6px; background: rgba(47, 129, 247, 0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #2f81f7;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">
+                        IP Threat Analysis
+                    </h3>
+                    <p style="font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 18px;">
+                        Query any IP against AbuseIPDB and Shodan for reputation, open ports, and threat score.
+                    </p>
+                </div>
+                <div>
+                    <a href="/scan/ip" style="color: #2f81f7; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                        Open &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 2: Local System Scanner -->
+            <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s ease;">
+                <div>
+                    <div style="width: 36px; height: 36px; border-radius: 6px; background: rgba(47, 129, 247, 0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #2f81f7;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.35-4.35" />
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">
+                        Local System Scanner
+                    </h3>
+                    <p style="font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 18px;">
+                        Nmap port discovery + NVD CVE vulnerability lookup + MITRE ATT&CK + Groq AI analysis.
+                    </p>
+                </div>
+                <div>
+                    <a href="/scan/local" style="color: #2f81f7; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                        Open &rarr;
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 3: Threat History -->
+            <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s ease;">
+                <div>
+                    <div style="width: 36px; height: 36px; border-radius: 6px; background: rgba(47, 129, 247, 0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #2f81f7;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </div>
+                    <h3 style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">
+                        Threat History
+                    </h3>
+                    <p style="font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 18px;">
+                        Audit and view all past scans, generated PDF assessments, and threat logs.
+                    </p>
+                </div>
+                <div>
+                    <a href="/history" style="color: #2f81f7; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                        Open &rarr;
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 4. System Pulse Section -->
+    <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div>
+                <span style="font-size: 15px; font-weight: 600; color: #ffffff;">System Pulse</span>
+                <span style="font-size: 12px; color: #8b949e; margin-left: 8px;">(Recent Scan History)</span>
+            </div>
+            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #3fb950; background: rgba(63, 185, 80, 0.1); border: 1px solid rgba(63, 185, 80, 0.25); border-radius: 12px; padding: 2px 8px;">
+                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3fb950;"></span>
+                Live
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #30363d; color: #8b949e; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">
+                        <th style="padding: 10px 12px;">Timestamp</th>
+                        <th style="padding: 10px 12px;">IP Address</th>
+                        <th style="padding: 10px 12px;">Risk Level</th>
+                        <th style="padding: 10px 12px;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if recent_history and recent_history|length > 0 %}
+                        {% for item in recent_history %}
+                        <tr style="border-bottom: 1px solid #21262d;">
+                            <td style="padding: 12px; color: #8b949e; font-size: 12px;">
+                                {{ item.searched_at.strftime('%Y-%m-%d %H:%M:%S UTC') if item.searched_at else 'N/A' }}
+                            </td>
+                            <td style="padding: 12px;">
+                                <a href="/report/{{ item.ip_address }}" style="color: #58a6ff; text-decoration: none; font-weight: 500;">
+                                    {{ item.ip_address }}
+                                </a>
+                            </td>
+                            <td style="padding: 12px;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    {% if item.risk_level in ['HIGH', 'CRITICAL'] %}
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f85149;"></span>
+                                        <span style="color: #f85149; font-weight: 600;">{{ item.risk_level }}</span>
+                                    {% elif item.risk_level == 'MEDIUM' %}
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #d29922;"></span>
+                                        <span style="color: #d29922; font-weight: 600;">{{ item.risk_level }}</span>
+                                    {% else %}
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3fb950;"></span>
+                                        <span style="color: #3fb950; font-weight: 600;">{{ item.risk_level or 'LOW' }}</span>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td style="padding: 12px;">
+                                <span style="color: #8b949e; font-size: 12px; background: #21262d; border-radius: 4px; padding: 2px 6px;">
+                                    Completed
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" style="padding: 24px; text-align: center; color: #8b949e; font-size: 13px;">
+                                No recent scan events found. Run a scan on <a href="/scan" style="color: #2f81f7; text-decoration: none;">IP Scanner</a>.
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

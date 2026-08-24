@@ -1,7 +1,7 @@
 """
 detection/ai_analyzer.py
 ------------------------
-Uses the Groq API (llama-3.3-70b-versatile) to perform an AI-driven security
+Uses the Groq API (llama-3.1-8b-instant) to perform an AI-driven security
 analysis of nmap scan results, discovered CVEs, and MITRE ATT&CK mappings.
 
 Functions:
@@ -22,7 +22,7 @@ from config import Config
 # ---------------------------------------------------------------------------
 # Model configuration
 # ---------------------------------------------------------------------------
-_MODEL = "llama-3.3-70b-versatile"
+_MODEL = "llama-3.1-8b-instant"
 _MAX_TOKENS = 2048
 _TEMPERATURE = 0.3        # Lower = more deterministic / analytical tone
 

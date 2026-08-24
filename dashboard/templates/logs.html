@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 880px; margin: 0 auto; color: #e0e0e0;">
+
+    <!-- PAGE HEADER -->
+    <div style="margin-bottom: 28px;">
+        <p style="font-size: 11px; color: #444; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+            Automated Incident Response Engine
+        </p>
+        <h1 style="font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Log Analyzer</h1>
+        <p style="font-size: 14px; color: #888; margin-top: 6px;">
+            Upload any log file or paste log content — AI explains it in plain English
+        </p>
+    </div>
+
+    <!-- UPLOAD CARD -->
+    <div class="card" style="margin-bottom: 24px; padding: 20px;">
+        
+        <!-- Tabs Header -->
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid #1e1e1e; padding-bottom: 14px; margin-bottom: 18px;">
+            <button type="button" id="tabUploadBtn" class="btn-primary" style="font-size: 13px; padding: 7px 16px;" onclick="switchTab('upload')">
+                Upload File
+            </button>
+            <button type="button" id="tabPasteBtn" class="btn-secondary" style="font-size: 13px; padding: 7px 16px;" onclick="switchTab('paste')">
+                Paste Text
+            </button>
+        </div>
+
+        <form id="logAnalyzeForm" onsubmit="submitLogAnalysis(event)">
+            
+            <!-- Tab 1: Upload File -->
+            <div id="tabUploadContent">
+                <div id="dropZone" style="border: 2px dashed #2a2a2a; border-radius: 8px; background: #0c0c0c; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-bottom: 12px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <div style="font-size: 14px; color: #bbb; font-weight: 500; margin-bottom: 4px;">
+                        Drop your log file here or click to browse
+                    </div>
+                    <div style="font-size: 12px; color: #555; font-family: 'JetBrains Mono', monospace;">
+                        Supports .log, .txt, and .evtx files
+                    </div>
+                    <input type="file" id="fileInput" name="logfile" accept=".log,.txt,.evtx" style="display: none;" onchange="handleFileSelected(this.files)" />
+                </div>
+                <div id="selectedFileName" style="margin-top: 10px; font-size: 12px; color: #2f81f7; font-family: 'JetBrains Mono', monospace; display: none;"></div>
+            </div>
+
+            <!-- Tab 2: Paste Text -->
+            <div id="tabPasteContent" style="display: none;">
+                <textarea id="logTextarea" name="logtext" rows="20" placeholder="Paste your log content here..." style="width: 100%; background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 8px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 14px; resize: vertical; line-height: 1.5; outline: none;"></textarea>
+            </div>
+
+            <!-- Analyze Button -->
+            <div style="margin-top: 18px;">
+                <button type="submit" id="analyzeSubmitBtn" style="width: 100%; background: #ffffff; color: #000000; font-weight: 600; font-size: 14px; padding: 12px; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s ease;">
+                    Analyze Log
+                </button>
+            </div>
+
+            <!-- Small Note -->
+            <div style="text-align: center; margin-top: 12px; font-size: 11px; color: #555; font-family: 'JetBrains Mono', monospace;">
+                Supports: SSH auth.log, nginx/Apache access logs, Windows Event Logs (.evtx), syslog, any text log
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- PROGRESS STATE -->
+    <div class="scan-progress" id="logScanProgress">
+        <div class="scan-spinner"></div>
+        <div class="scan-label" id="logScanLabel">AI is reading your log file...</div>
+    </div>
+
+    <!-- RESULTS SECTION -->
+    <div id="logResultsSection" style="display: none;">
+
+        <!-- Summary Bar -->
+        <div id="logSummaryBar" style="margin-bottom: 16px;"></div>
+
+        <!-- Stat Cards -->
+        <div class="grid-4" id="logStatCards" style="margin-bottom: 16px;"></div>
+
+        <!-- AI Analysis Card -->
+        <div class="card" style="margin-bottom: 16px; padding: 20px;">
+            <div class="card-title" style="margin-bottom: 14px;">AI Analysis</div>
+            <div id="logAiBox" style="font-family: 'Inter', sans-serif; font-size: 15px; color: #999; line-height: 1.8;"></div>
+        </div>
+
+        <!-- Suspicious Lines Card -->
+        <div class="card" id="suspiciousLinesCard" style="margin-bottom: 16px; padding: 20px;">
+            <div class="card-title" style="margin-bottom: 14px;">Suspicious Lines Found</div>
+            <div id="suspiciousLinesContent" style="background: #090909; border: 1px solid #1a1a1a; border-radius: 6px; padding: 12px 16px; max-height: 380px; overflow-y: auto; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #555;"></div>
+        </div>
+
+        <!-- IP Addresses Found Card -->
+        <div class="card" id="ipsFoundCard" style="margin-bottom: 28px; padding: 20px;">
+            <div class="card-title" style="margin-bottom: 14px;">IP Addresses Found</div>
+            <div id="ipsFoundList" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let activeTab = 'upload';
+
+    function switchTab(tab) {
+        activeTab = tab;
+        const uploadBtn = document.getElementById('tabUploadBtn');
+        const pasteBtn = document.getElementById('tabPasteBtn');
+        const uploadContent = document.getElementById('tabUploadContent');
+        const pasteContent = document.getElementById('tabPasteContent');
+
+        if (tab === 'upload') {
+            uploadBtn.className = 'btn-primary';
+            pasteBtn.className = 'btn-secondary';
+            uploadContent.style.display = 'block';
+            pasteContent.style.display = 'none';
+        } else {
+            uploadBtn.className = 'btn-secondary';
+            pasteBtn.className = 'btn-primary';
+            uploadContent.style.display = 'none';
+            pasteContent.style.display = 'block';
+        }
+    }
+
+    // Drag and drop setup
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    if (dropZone && fileInput) {
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#2f81f7';
+            dropZone.style.background = '#10141a';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.borderColor = '#2a2a2a';
+            dropZone.style.background = '#0c0c0c';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.borderColor = '#2a2a2a';
+            dropZone.style.background = '#0c0c0c';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelected(e.dataTransfer.files);
+            }
+        });
+    }
+
+    function handleFileSelected(files) {
+        const nameEl = document.getElementById('selectedFileName');
+        if (files && files.length > 0) {
+            nameEl.style.display = 'block';
+            nameEl.textContent = 'Selected: ' + files[0].name + ' (' + (files[0].size / 1024).toFixed(1) + ' KB)';
+        } else {
+            nameEl.style.display = 'none';
+        }
+    }
+
+    function getBadgeClass(sev) {
+        const s = (sev || 'LOW').toUpperCase();
+        if (s === 'CRITICAL') return 'badge-critical';
+        if (s === 'HIGH') return 'badge-high';
+        if (s === 'MEDIUM') return 'badge-medium';
+        return 'badge-low';
+    }
+
+    async function submitLogAnalysis(e) {
+        e.preventDefault();
+        const file = fileInput.files[0];
+        const text = document.getElementById('logTextarea').value.trim();
+
+        if (activeTab === 'upload' && !file) {
+            alert('Please select or drop a log file.');
+            return;
+        }
+        if (activeTab === 'paste' && !text) {
+            alert('Please paste log content into the textarea.');
+            return;
+        }
+
+        const formData = new FormData();
+        if (activeTab === 'upload' && file) {
+            formData.append('logfile', file);
+        } else if (text) {
+            formData.append('logtext', text);
+        }
+
+        // Show progress spinner
+        document.getElementById('logResultsSection').style.display = 'none';
+        document.getElementById('logScanProgress').classList.add('show');
+        const submitBtn = document.getElementById('analyzeSubmitBtn');
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = '0.5';
+
+        try {
+            const res = await fetch('/api/analyze-log', {
+                method: 'POST',
+                body: formData
+            });
+
+            document.getElementById('logScanProgress').classList.remove('show');
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+
+            if (!res.ok) {
+                const err = await res.json();
+                alert('Analysis failed: ' + (err.error || 'Server error'));
+                return;
+            }
+
+            const data = await res.json();
+            renderLogAnalysisResults(data);
+
+        } catch (err) {
+            document.getElementById('logScanProgress').classList.remove('show');
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            alert('Network connection error.');
+        }
+    }
+
+    function renderLogAnalysisResults(data) {
+        document.getElementById('logResultsSection').style.display = 'block';
+
+        const sev = (data.severity || 'LOW').toUpperCase();
+        const logType = (data.log_type || 'UNKNOWN').toUpperCase();
+
+        // 1. Summary Bar
+        document.getElementById('logSummaryBar').innerHTML = `
+            <div style="display:flex; align-items:center; justify-content:space-between; background:#111; border:1px solid #1e1e1e; border-radius:10px; padding:16px 20px;">
+                <div>
+                    <div style="font-size:11px; color:#444; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">Log Audit Complete</div>
+                    <div style="font-size:16px; font-weight:700; color:#fff; font-family:'JetBrains Mono',monospace;">FORMAT: ${logType}</div>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <span class="badge ${getBadgeClass(sev)}" style="font-size:13px; padding:6px 14px;">${sev} SEVERITY</span>
+                </div>
+            </div>
+        `;
+
+        // 2. Four Stat Cards
+        document.getElementById('logStatCards').innerHTML = `
+            <div class="stat-card"><div class="stat-label">Total Lines</div><div class="stat-value">${data.total_lines}</div></div>
+            <div class="stat-card"><div class="stat-label">Errors Found</div><div class="stat-value">${data.error_count}</div></div>
+            <div class="stat-card"><div class="stat-label">Suspicious Events</div><div class="stat-value">${data.suspicious_count}</div></div>
+            <div class="stat-card"><div class="stat-label">IPs Detected</div><div class="stat-value">${(data.ip_addresses || []).length}</div></div>
+        `;
+
+        // 3. AI Analysis Card — bold white headers for number+dot lines
+        const aiRaw = data.ai_analysis || 'No AI assessment available.';
+        const aiLines = aiRaw.split('\n');
+        let formattedAi = '';
+
+        aiLines.forEach(line => {
+            const trimmed = line.trim();
+            if (!trimmed) {
+                formattedAi += '<div style="height: 10px;"></div>';
+                return;
+            }
+
+            // Check if starts with number + dot (e.g. "1. ", "2. ") or "### " / "## "
+            const isNumberedHeader = /^\d+\.\s+/.test(trimmed) || /^#+\s+\d+\./.test(trimmed);
+            const isMarkdownHeader = /^#+\s+/.test(trimmed);
+
+            if (isNumberedHeader || isMarkdownHeader) {
+                const headerText = trimmed.replace(/^#+\s*/, '').replace(/\*\*/g, '');
+                formattedAi += `<div style="font-size: 16px; font-weight: 700; color: #ffffff; margin-top: 18px; margin-bottom: 8px;">${headerText}</div>`;
+            } else {
+                let pText = trimmed
+                    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#ddd;">$1</strong>')
+                    .replace(/`(.+?)`/g, '<code style="background:#1a1a1a; padding:2px 6px; border-radius:4px; font-family:\'JetBrains Mono\',monospace; color:#ccc;">$1</code>');
+                formattedAi += `<p style="margin-bottom: 8px; color: #999; font-size: 15px; line-height: 1.8;">${pText}</p>`;
+            }
+        });
+
+        document.getElementById('logAiBox').innerHTML = formattedAi;
+
+        // 4. Suspicious Lines Card
+        const suspiciousContent = document.getElementById('suspiciousLinesContent');
+        const susLines = data.suspicious_lines || [];
+        if (susLines.length === 0) {
+            suspiciousContent.innerHTML = '<div style="color: #444; font-size: 13px;">No suspicious lines flagged.</div>';
+        } else {
+            let susHtml = '';
+            susLines.forEach((sLine, index) => {
+                susHtml += `
+                    <div style="display: flex; gap: 12px; padding: 4px 0; border-bottom: 1px solid #121212;">
+                        <span style="color: #444; user-select: none; width: 28px; text-align: right;">${index + 1}</span>
+                        <span style="color: #888; word-break: break-all;">${sLine}</span>
+                    </div>
+                `;
+            });
+            suspiciousContent.innerHTML = susHtml;
+        }
+
+        // 5. IP Addresses Found Card
+        const ipsContainer = document.getElementById('ipsFoundList');
+        const ips = data.ip_addresses || [];
+        if (ips.length === 0) {
+            ipsContainer.innerHTML = '<span style="color: #555; font-size: 13px;">No IP addresses found in log.</span>';
+        } else {
+            let ipHtml = '';
+            ips.forEach(ip => {
+                ipHtml += `
+                    <a href="/scan/ip" onclick="sessionStorage.setItem('target_ip_prefill', '${ip}')" class="badge badge-port" style="text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Scan this IP">
+                        <span>${ip}</span>
+                        <span style="font-size: 10px; color: #666;">&rarr;</span>
+                    </a>
+                `;
+            });
+            ipsContainer.innerHTML = ipHtml;
+        }
+
+        document.getElementById('logResultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

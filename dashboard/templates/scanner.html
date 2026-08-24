@@ -1,426 +1,433 @@
 {% extends "base.html" %}
-
-{% block title %}> LOCAL SYSTEM SCANNER — ThreatOps{% endblock %}
-
 {% block content %}
-<div class="scanner-container" style="max-width: 1000px; margin: 0 auto; font-family: var(--font-mono);">
+
+<div style="max-width: 860px; margin: 0 auto;">
+
     <!-- Page Header -->
-    <div style="margin-bottom: 2rem;">
-        <span style="color: var(--text-grey); font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase;">AUTOMATED INCIDENT RESPONSE ENGINE</span>
-        <h1 style="font-size: 2.4rem; color: var(--accent-red); text-shadow: 0 0 12px rgba(255, 34, 51, 0.5); font-family: var(--font-mono); margin-top: 0.3rem;">
-            &gt; LOCAL SYSTEM SCANNER
-        </h1>
-        <p style="color: var(--text-grey); font-size: 0.95rem; margin-top: 0.4rem;">
-            Execute live port enumeration, NIST CVE lookup, MITRE ATT&amp;CK technique mapping, and Groq LLM threat analysis.
-        </p>
+    <div style="margin-bottom: 28px;">
+        <p style="font-size: 11px; color: #444; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
+            Automated Incident Response Engine</p>
+        {% if mode == 'local' %}
+            <h1 style="font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Local System Scanner</h1>
+            <p style="font-size: 14px; color: #888; margin-top: 6px;">Scanning your local machine for open ports, CVEs and vulnerabilities...</p>
+        {% else %}
+            <h1 style="font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">IP Threat Analysis</h1>
+            <p style="font-size: 14px; color: #888; margin-top: 6px;">Query any public IP for abuse reports, open ports and threat intelligence</p>
+        {% endif %}
     </div>
 
-    <!-- Scanner Control Card -->
-    <div class="stat-card" style="margin-bottom: 2rem; border: 1px solid var(--accent-red); box-shadow: 0 0 15px rgba(255, 34, 51, 0.15); background: #0c0c0c;">
-        <div style="display: flex; gap: 1.25rem; align-items: flex-end; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 260px;">
-                <label for="ipInput" style="display: block; color: var(--text-grey); font-size: 0.85rem; letter-spacing: 1px; margin-bottom: 0.5rem;">
-                    TARGET IP ADDRESS:
-                </label>
-                <input 
-                    type="text" 
-                    id="ipInput" 
-                    placeholder="Click 'SCAN MY LOCAL IP' or enter IP..."
-                    style="width: 100%; height: 48px; background: #050505; border: 1px solid var(--border-input); border-radius: 6px; padding: 0 1rem; color: #ffffff; font-family: var(--font-mono); font-size: 1.05rem; outline: none; transition: border-color 0.2s;"
-                >
-            </div>
-            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                <button 
-                    type="button" 
-                    id="btnScanLocal"
-                    class="terminal-btn"
-                    style="background: var(--accent-red); color: #000000; font-family: var(--font-mono); font-weight: bold; font-size: 0.95rem; height: 48px; padding: 0 1.5rem; box-shadow: 0 0 10px rgba(255, 34, 51, 0.4); border: none; cursor: pointer; transition: all 0.2s;"
-                >
-                    ⚡ SCAN MY LOCAL IP
-                </button>
-                <button 
-                    type="button" 
-                    id="btnScanCustom"
-                    class="terminal-btn"
-                    style="background: transparent; border: 1px solid var(--text-primary); color: var(--text-primary); font-family: var(--font-mono); font-size: 0.95rem; height: 48px; padding: 0 1.25rem; cursor: pointer;"
-                >
-                    RUN TARGET SCAN 🔍
-                </button>
-            </div>
+    <!-- Scan Input Card (IP Mode) -->
+    {% if mode != 'local' %}
+    <div class="card">
+        <div class="card-title">Target</div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <input class="input-field" id="targetIP" placeholder="Enter IP address (e.g. 8.8.8.8)..."
+                style="flex: 1; min-width: 200px;" />
+            <button class="btn-primary" onclick="runScan(document.getElementById('targetIP').value)">Analyze</button>
         </div>
-
-        <!-- Detected Local IP Banner -->
-        <div id="localIpBanner" style="display: none; margin-top: 1.25rem; padding: 0.75rem 1rem; background: rgba(255, 34, 51, 0.1); border-left: 4px solid var(--accent-red); color: #ffffff; font-size: 0.9rem;">
-            <span style="color: var(--accent-red); font-weight: bold;">[SYSTEM INFO]</span> Detected Local Host IP: <span id="detectedIpText" style="color: #ffffff; font-weight: bold; text-decoration: underline;"></span>
-        </div>
-
-        <!-- Pulsing Scanning Animation -->
-        <div id="scanningStatus" style="display: none; margin-top: 1.5rem; padding: 1.5rem; background: #050505; border: 1px dashed var(--accent-red); border-radius: 6px; text-align: center;">
-            <div class="pulse-red" style="display: inline-block; font-size: 1.5rem; font-weight: bold; color: var(--accent-red); letter-spacing: 3px; animation: blinkPulse 1.2s infinite ease-in-out;">
-                ⚠️ SCANNING LOCAL NETWORK &amp; ANALYZING THREAT SURFACE...
-            </div>
-            <div style="margin-top: 0.75rem; color: var(--text-grey); font-size: 0.85rem;" id="scanningSubtext">
-                [1/4] Probing active ports &amp; identifying service versions...
-            </div>
-        </div>
-
-        <!-- Error Message Banner -->
-        <div id="errorBanner" style="display: none; margin-top: 1.25rem; padding: 1rem; background: rgba(255, 34, 51, 0.2); border: 1px solid var(--accent-red); border-radius: 6px; color: #ff3344; font-size: 0.9rem;">
-        </div>
-    </div>
-
-    <!-- Results Panel (Revealed Section by Section) -->
-    <div id="resultsContainer" style="display: none; flex-direction: column; gap: 2rem;">
         
-        <!-- Header & Download Button Bar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; padding: 1.25rem; background: #111111; border: 1px solid var(--border-muted); border-radius: 8px;">
-            <div>
-                <span style="color: var(--text-grey); font-size: 0.8rem; letter-spacing: 1px;">TARGET EVALUATION COMPLETE</span>
-                <h2 style="color: #ffffff; font-size: 1.6rem; margin-top: 0.1rem;" id="resTargetHeader">
-                    TARGET: 127.0.0.1
-                </h2>
-            </div>
-            <div>
-                <a id="btnDownloadPdf" href="#" target="_blank" class="terminal-btn" style="display: none; background: var(--accent-red); color: #000000; font-family: var(--font-mono); font-weight: bold; text-decoration: none; padding: 0.75rem 1.4rem; font-size: 0.95rem; box-shadow: 0 0 12px rgba(255, 34, 51, 0.5);">
-                    📄 DOWNLOAD PDF REPORT
-                </a>
+        <!-- Quick Select Buttons -->
+        <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 11px; color: #555; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">Quick Select:</span>
+            <button type="button" class="btn-secondary" style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="selectAndScan('8.8.8.8')">
+                8.8.8.8 (Google DNS)
+            </button>
+            <button type="button" class="btn-secondary" style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="selectAndScan('1.1.1.1')">
+                1.1.1.1 (Cloudflare)
+            </button>
+            <button type="button" class="btn-secondary" style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="selectAndScan('208.67.222.222')">
+                208.67.222.222 (OpenDNS)
+            </button>
+        </div>
+
+        <div id="localIPInfo"
+            style="margin-top: 12px; font-size: 12px; color: #444; font-family: 'JetBrains Mono', monospace; display: none;">
+        </div>
+    </div>
+    {% else %}
+    <div id="localIPInfo"
+        style="margin-bottom: 20px; font-size: 13px; color: #888; font-family: 'JetBrains Mono', monospace; display: none;">
+    </div>
+    {% endif %}
+
+    <!-- Scanning Progress -->
+    <div class="scan-progress" id="scanProgress">
+        <div class="scan-spinner"></div>
+        <div class="scan-label" id="scanLabel">Initializing scan...</div>
+    </div>
+
+    <!-- Results -->
+    <div id="results" style="display: none;">
+
+        <!-- Summary Bar -->
+        <div id="summaryBar" style="margin-bottom: 16px;"></div>
+
+        <!-- Stat Cards -->
+        <div class="grid-4" id="statCards" style="margin-bottom: 16px;"></div>
+
+        <!-- Open Ports -->
+        <div class="card" id="portsCard">
+            <div class="card-title">Open Ports & Services</div>
+            <table class="data-table" id="portsTable">
+                <thead>
+                    <tr>
+                        <th>Port</th>
+                        <th>Protocol</th>
+                        <th>Service</th>
+                        <th>Version</th>
+                    </tr>
+                </thead>
+                <tbody id="portsBody"></tbody>
+            </table>
+        </div>
+
+        <!-- CVE Findings -->
+        <div class="card" id="cveCard">
+            <div class="card-title">CVE Findings</div>
+            <div id="cveList"></div>
+        </div>
+
+        <!-- MITRE ATT&CK -->
+        <div class="card" id="mitreCard">
+            <div class="card-title">MITRE ATT&CK Mappings</div>
+            <table class="data-table" id="mitreTable">
+                <thead>
+                    <tr>
+                        <th>Port</th>
+                        <th>Technique ID</th>
+                        <th>Technique</th>
+                        <th>Tactic</th>
+                    </tr>
+                </thead>
+                <tbody id="mitreBody"></tbody>
+            </table>
+        </div>
+
+        <!-- AI Analysis -->
+        <div class="card">
+            <div class="card-title">AI Analysis</div>
+            <div class="ai-box" id="aiBox"></div>
+        </div>
+
+        <!-- Data Sources -->
+        <div class="card" id="dataSourcesCard" style="background:#0c0c0c; border:1px solid #1a1a1a; padding:16px 20px;">
+            <div class="card-title" style="font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#666; margin-bottom:12px;">Data Sources</div>
+            <table class="data-table" style="width:100%; font-size:12px; font-family:'JetBrains Mono',monospace;">
+                <thead>
+                    <tr style="border-bottom:1px solid #1a1a1a; color:#555;">
+                        <th style="padding:6px 10px; text-align:left; font-weight:600;">Source</th>
+                        <th style="padding:6px 10px; text-align:left; font-weight:600;">Provided Data</th>
+                        <th style="padding:6px 10px; text-align:right; font-weight:600;">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody style="color:#888;">
+                    <tr style="border-bottom:1px solid #141414;">
+                        <td style="padding:8px 10px; color:#aaa; font-weight:500;">AbuseIPDB</td>
+                        <td style="padding:8px 10px; color:#777;">Abuse confidence score, total reports, ISP, country</td>
+                        <td style="padding:8px 10px; text-align:right; color:#555;" class="query-timestamp">—</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #141414;">
+                        <td style="padding:8px 10px; color:#aaa; font-weight:500;">Shodan</td>
+                        <td style="padding:8px 10px; color:#777;">Open ports, hostnames, organization</td>
+                        <td style="padding:8px 10px; text-align:right; color:#555;" class="query-timestamp">—</td>
+                    </tr>
+                    <tr style="border-bottom:1px solid #141414;">
+                        <td style="padding:8px 10px; color:#aaa; font-weight:500;">NVD NIST</td>
+                        <td style="padding:8px 10px; color:#777;">CVE findings for detected services</td>
+                        <td style="padding:8px 10px; text-align:right; color:#555;" class="query-timestamp">—</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:8px 10px; color:#aaa; font-weight:500;">Groq Llama</td>
+                        <td style="padding:8px 10px; color:#777;">AI risk analysis</td>
+                        <td style="padding:8px 10px; text-align:right; color:#555;" class="query-timestamp">—</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="margin-top:12px; padding-top:10px; border-top:1px solid #161616; font-size:11px; color:#444; font-family:'JetBrains Mono',monospace;">
+                All data queried live at scan time. No cached or simulated results.
             </div>
         </div>
 
-        <!-- SECTION 1: OPEN PORTS TABLE -->
-        <div id="secOpenPorts" class="threats-section" style="display: none; border: 1px solid var(--border-muted); background: #111111;">
-            <h2 class="section-title" style="color: var(--accent-red); font-family: var(--font-mono); font-size: 1.25rem;">
-                &gt; 1. OPEN PORTS &amp; DETECTED SERVICES
-            </h2>
-            <div style="overflow-x: auto; margin-top: 1rem;">
-                <table class="threat-table" style="font-family: var(--font-mono);">
-                    <thead>
-                        <tr>
-                            <th style="color: var(--accent-red);">PORT</th>
-                            <th style="color: var(--accent-red);">PROTOCOL</th>
-                            <th style="color: var(--accent-red);">SERVICE</th>
-                            <th style="color: var(--accent-red);">DETECTED VERSION</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tblOpenPortsBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- SECTION 2: CVE FINDINGS -->
-        <div id="secCves" class="threats-section" style="display: none; border: 1px solid var(--border-muted); background: #111111;">
-            <h2 class="section-title" style="color: var(--accent-red); font-family: var(--font-mono); font-size: 1.25rem;">
-                &gt; 2. DISCOVERED CVE VULNERABILITIES
-            </h2>
-            <div id="cveCardsContainer" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
-            </div>
-        </div>
-
-        <!-- SECTION 3: MITRE ATT&CK MAPPINGS TABLE -->
-        <div id="secMitre" class="threats-section" style="display: none; border: 1px solid var(--border-muted); background: #111111;">
-            <h2 class="section-title" style="color: var(--accent-red); font-family: var(--font-mono); font-size: 1.25rem;">
-                &gt; 3. MITRE ATT&amp;CK TECHNIQUE MAPPINGS
-            </h2>
-            <div style="overflow-x: auto; margin-top: 1rem;">
-                <table class="threat-table" style="font-family: var(--font-mono);">
-                    <thead>
-                        <tr>
-                            <th style="color: var(--accent-red);">PORT</th>
-                            <th style="color: var(--accent-red);">TECHNIQUE ID</th>
-                            <th style="color: var(--accent-red);">TECHNIQUE NAME</th>
-                            <th style="color: var(--accent-red);">TACTIC</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tblMitreBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- SECTION 4: AI ANALYSIS TERMINAL BOX -->
-        <div id="secAiAnalysis" class="threats-section" style="display: none; border: 1px solid var(--accent-red); background: #050505; box-shadow: 0 0 15px rgba(255, 34, 51, 0.15);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #222222; padding-bottom: 0.75rem; margin-bottom: 1rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #ff3344;">●</span>
-                    <span style="color: #ffc822;">●</span>
-                    <span style="color: #22ff78;">●</span>
-                    <span style="color: var(--text-grey); font-size: 0.85rem; margin-left: 0.5rem;">root@threatops:~# ai_analyzer --model groq/llama-3.3-70b-versatile</span>
-                </div>
-                <span style="color: var(--accent-red); font-size: 0.8rem; font-weight: bold;">LIVE LLM FEED</span>
-            </div>
-            
-            <h2 class="section-title" style="color: #ffffff; font-family: var(--font-mono); font-size: 1.2rem; margin-bottom: 1rem;">
-                &gt; 4. GROQ AI RISK EVALUATION REPORT
-            </h2>
-
-            <div id="terminalAiOutput" style="background: #000000; border: 1px solid #1a1a1a; border-radius: 4px; padding: 1.25rem; color: #22ff78; font-family: var(--font-mono); font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word;">
-            </div>
+        <!-- Download -->
+        <div style="margin-top: 8px; margin-bottom: 32px;">
+            <a id="pdfLink" href="#" target="_blank">
+                <button class="btn-secondary" style="width: 100%;">Download PDF Report</button>
+            </a>
         </div>
 
     </div>
 </div>
 
-<style>
-@keyframes blinkPulse {
-    0% { opacity: 1; text-shadow: 0 0 10px rgba(255, 34, 51, 0.8); }
-    50% { opacity: 0.3; text-shadow: 0 0 2px rgba(255, 34, 51, 0.2); }
-    100% { opacity: 1; text-shadow: 0 0 10px rgba(255, 34, 51, 0.8); }
-}
+{% endblock %}
 
-#ipInput:focus {
-    border-color: var(--accent-red) !important;
-    box-shadow: 0 0 8px rgba(255, 34, 51, 0.4);
-}
-</style>
-
+{% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const btnScanLocal = document.getElementById('btnScanLocal');
-    const btnScanCustom = document.getElementById('btnScanCustom');
-    const ipInput = document.getElementById('ipInput');
-    const localIpBanner = document.getElementById('localIpBanner');
-    const detectedIpText = document.getElementById('detectedIpText');
-    const scanningStatus = document.getElementById('scanningStatus');
-    const scanningSubtext = document.getElementById('scanningSubtext');
-    const errorBanner = document.getElementById('errorBanner');
-    const resultsContainer = document.getElementById('resultsContainer');
-    const btnDownloadPdf = document.getElementById('btnDownloadPdf');
-
-    // Click handler for SCAN MY LOCAL IP
-    btnScanLocal.addEventListener('click', async () => {
-        errorBanner.style.display = 'none';
-        btnScanLocal.disabled = true;
-        btnScanCustom.disabled = true;
-
-        try {
-            // 1. Fetch local IP from backend get_local_ip()
-            const res = await fetch('/api/local-ip');
-            const data = await res.json();
-            if (data.status === 'success' && data.ip) {
-                ipInput.value = data.ip;
-                detectedIpText.textContent = data.ip;
-                localIpBanner.style.display = 'block';
-                // Proceed to scan
-                runScan(data.ip);
-            } else {
-                throw new Error("Could not automatically detect local host IP.");
-            }
-        } catch (err) {
-            showError(err.message);
-            btnScanLocal.disabled = false;
-            btnScanCustom.disabled = false;
-        }
-    });
-
-    // Click handler for CUSTOM TARGET SCAN
-    btnScanCustom.addEventListener('click', () => {
-        const ip = ipInput.value.trim();
-        if (!ip) {
-            showError("Please enter a valid IP address to scan.");
-            return;
+    function selectAndScan(ip) {
+        const input = document.getElementById('targetIP');
+        if (input) {
+            input.value = ip;
         }
         runScan(ip);
-    });
+    }
 
-    async function runScan(targetIp) {
-        // Reset UI
-        errorBanner.style.display = 'none';
-        resultsContainer.style.display = 'none';
-        btnDownloadPdf.style.display = 'none';
-        hideAllSections();
+    async function scanLocalIP() {
+        try {
+            // Show scanning indicator immediately
+            document.getElementById('results').style.display = 'none';
+            const progress = document.getElementById('scanProgress');
+            if (progress) progress.classList.add('show');
+            const labelEl = document.getElementById('scanLabel');
+            if (labelEl) labelEl.textContent = 'Detecting local IP and scanning your system...';
 
-        scanningStatus.style.display = 'block';
-        btnScanLocal.disabled = true;
-        btnScanCustom.disabled = true;
+            const res = await fetch('/api/local_ip');
+            const data = await res.json();
+            const ip = data.ip;
+            const targetInput = document.getElementById('targetIP');
+            if (targetInput) {
+                targetInput.value = ip;
+            }
+            const infoEl = document.getElementById('localIPInfo');
+            if (infoEl) {
+                infoEl.style.display = 'block';
+                infoEl.textContent = 'Target IP: ' + ip;
+            }
+            runScan(ip);
+        } catch (e) {
+            alert('Could not detect local IP');
+        }
+    }
 
-        // Subtext status ticker
-        const statusTicker = setInterval(() => {
-            const msgs = [
-                "[1/4] Probing active ports & identifying service versions...",
-                "[2/4] Querying NIST NVD for discovered CVE vulnerabilities...",
-                "[3/4] Mapping active services to MITRE ATT&CK techniques...",
-                "[4/4] Invoking Groq Llama-3.3-70b AI model & building PDF report..."
-            ];
-            const currentIdx = Math.floor(Math.random() * msgs.length);
-            scanningSubtext.textContent = msgs[currentIdx];
-        }, 3000);
+    async function runScan(ip) {
+        if (!ip || ip.trim() === '') {
+            alert('Please enter an IP address');
+            return;
+        }
+
+        // Show progress, hide results
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('scanProgress').classList.add('show');
+
+        const labels = [
+            'Running Nmap port scan...',
+            'Querying NVD vulnerability database...',
+            'Mapping to MITRE ATT&CK framework...',
+            'Running Groq AI analysis...'
+        ];
+        let i = 0;
+        const labelEl = document.getElementById('scanLabel');
+        const interval = setInterval(() => {
+            if (i < labels.length) {
+                labelEl.textContent = labels[i++];
+            }
+        }, 4000);
 
         try {
-            const resp = await fetch('/api/scan', {
+            const res = await fetch('/api/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target_ip: targetIp })
+                body: JSON.stringify({ target_ip: ip })
             });
 
-            clearInterval(statusTicker);
-            const resData = await resp.json();
+            clearInterval(interval);
+            document.getElementById('scanProgress').classList.remove('show');
 
-            if (!resp.ok || resData.status === 'error') {
-                throw new Error(resData.message || "Failed to scan target host.");
+            if (!res.ok) {
+                const err = await res.json();
+                alert('Scan error: ' + (err.error || 'Unknown error'));
+                return;
             }
 
-            scanningStatus.style.display = 'none';
-            btnScanLocal.disabled = false;
-            btnScanCustom.disabled = false;
+            const data = await res.json();
+            renderResults(data, ip);
 
-            // Stream / Reveal results section by section dynamically
-            revealResultsSequentially(targetIp, resData);
-
-        } catch (err) {
-            clearInterval(statusTicker);
-            scanningStatus.style.display = 'none';
-            btnScanLocal.disabled = false;
-            btnScanCustom.disabled = false;
-            showError(err.message);
+        } catch (e) {
+            clearInterval(interval);
+            document.getElementById('scanProgress').classList.remove('show');
+            alert('Connection error. Make sure the server is running.');
         }
     }
 
-    function revealResultsSequentially(targetIp, resData) {
-        const payload = resData.data || {};
-        const scanResults = payload.scan_results || {};
-        const cveResults = payload.cve_results || {};
-        const mitreMappings = payload.mitre_mappings || [];
-        const aiAnalysis = payload.ai_analysis || "No AI analysis generated.";
-
-        document.getElementById('resTargetHeader').textContent = `TARGET: ${scanResults.target_ip || targetIp}`;
-        resultsContainer.style.display = 'flex';
-
-        // SECTION 1: Open Ports (delay 200ms)
-        setTimeout(() => {
-            renderOpenPorts(scanResults.open_ports || []);
-            document.getElementById('secOpenPorts').style.display = 'block';
-        }, 200);
-
-        // SECTION 2: CVE Findings (delay 600ms)
-        setTimeout(() => {
-            renderCveFindings(cveResults);
-            document.getElementById('secCves').style.display = 'block';
-        }, 600);
-
-        // SECTION 3: MITRE ATT&CK Mappings (delay 1000ms)
-        setTimeout(() => {
-            renderMitreMappings(mitreMappings);
-            document.getElementById('secMitre').style.display = 'block';
-        }, 1000);
-
-        // SECTION 4: AI Analysis Terminal (delay 1400ms)
-        setTimeout(() => {
-            renderAiAnalysisTerminal(aiAnalysis);
-            document.getElementById('secAiAnalysis').style.display = 'block';
-            
-            // Show Download PDF button after scan completes
-            if (resData.pdf_url) {
-                btnDownloadPdf.href = resData.pdf_url;
-                btnDownloadPdf.style.display = 'inline-block';
-            }
-        }, 1400);
+    function getBadgeClass(severity) {
+        const s = (severity || '').toUpperCase();
+        if (s === 'CRITICAL') return 'badge-critical';
+        if (s === 'HIGH') return 'badge-high';
+        if (s === 'MEDIUM') return 'badge-medium';
+        return 'badge-low';
     }
 
-    function renderOpenPorts(ports) {
-        const tbody = document.getElementById('tblOpenPortsBody');
-        tbody.innerHTML = '';
+    function renderResults(data, ip) {
+        document.getElementById('results').style.display = 'block';
+
+        // Summary bar
+        const risk = data.risk_level || 'LOW';
+
+        // Provider note based on ISP / Org name
+        const ispName = data.isp || data.org || '';
+        let ispNote = '';
+        if (ispName.toLowerCase().includes('google')) {
+            ispNote = ' <span style="font-size:11px; color:#888; background:#181818; border:1px solid #282828; border-radius:4px; padding:2px 6px; margin-left:6px;">Google Public Infrastructure</span>';
+        } else if (ispName.toLowerCase().includes('cloudflare')) {
+            ispNote = ' <span style="font-size:11px; color:#888; background:#181818; border:1px solid #282828; border-radius:4px; padding:2px 6px; margin-left:6px;">Cloudflare CDN</span>';
+        } else if (ispName.toLowerCase().includes('amazon')) {
+            ispNote = ' <span style="font-size:11px; color:#888; background:#181818; border:1px solid #282828; border-radius:4px; padding:2px 6px; margin-left:6px;">Amazon AWS</span>';
+        }
+
+        // Format hostnames
+        let hostnamesVal = '—';
+        if (data.hostnames) {
+            if (Array.isArray(data.hostnames) && data.hostnames.length > 0) {
+                hostnamesVal = data.hostnames.join(', ');
+            } else if (typeof data.hostnames === 'string' && data.hostnames.trim()) {
+                hostnamesVal = data.hostnames.trim();
+            }
+        }
+
+        const ispVal = ispName ? `${ispName}${ispNote}` : '—';
+        const countryVal = data.country || '—';
+        const domainVal = data.domain || '—';
+
+        document.getElementById('summaryBar').innerHTML = `
+        <div style="display:flex; align-items:center; justify-content:space-between; background:#111; border:1px solid #1e1e1e; border-radius:10px; padding:16px 20px; margin-bottom:10px;">
+            <div>
+                <div style="font-size:11px; color:#444; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px;">Scan Complete</div>
+                <div style="font-size:18px; font-weight:700; color:#fff; font-family:'JetBrains Mono',monospace;">${ip}</div>
+            </div>
+            <span class="badge ${getBadgeClass(risk)}" style="font-size:13px; padding:6px 14px;">${risk}</span>
+        </div>
+        <div style="display:flex; flex-wrap:wrap; gap:16px 24px; align-items:center; background:#0d0d0d; border:1px solid #1a1a1a; border-radius:10px; padding:12px 20px; font-family:'JetBrains Mono',monospace; font-size:12px;">
+            <div style="display:flex; gap:6px; align-items:center;">
+                <span style="color:#555; text-transform:uppercase; font-size:10px; letter-spacing:0.05em;">ORG/ISP:</span>
+                <span style="color:#888;">${ispVal}</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <span style="color:#555; text-transform:uppercase; font-size:10px; letter-spacing:0.05em;">COUNTRY:</span>
+                <span style="color:#888;">${countryVal}</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <span style="color:#555; text-transform:uppercase; font-size:10px; letter-spacing:0.05em;">DOMAIN:</span>
+                <span style="color:#888;">${domainVal}</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <span style="color:#555; text-transform:uppercase; font-size:10px; letter-spacing:0.05em;">HOSTNAMES:</span>
+                <span style="color:#888;">${hostnamesVal}</span>
+            </div>
+        </div>
+    `;
+
+        // Stat cards
+        const ports = data.open_ports || [];
+        const cves = data.cve_findings || [];
+        document.getElementById('statCards').innerHTML = `
+        <div class="stat-card"><div class="stat-label">Open Ports</div><div class="stat-value">${ports.length}</div></div>
+        <div class="stat-card"><div class="stat-label">CVEs Found</div><div class="stat-value">${cves.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Risk Level</div><div class="stat-value" style="font-size:16px;">${risk}</div></div>
+        <div class="stat-card"><div class="stat-label">Scan Time</div><div class="stat-value" style="font-size:14px;">${data.scan_time || 'N/A'}</div></div>
+    `;
+
+        // Ports table
+        const portsBody = document.getElementById('portsBody');
+        portsBody.innerHTML = '';
         if (ports.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-grey); padding: 1rem;">(no open ports detected on target)</td></tr>';
-            return;
-        }
-        ports.forEach(p => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="color: var(--accent-red); font-weight: bold;">⚡ ${p.port}</td>
-                <td>${p.protocol || 'tcp'}</td>
-                <td style="color: #ffffff;">${p.service_name || 'unknown'}</td>
-                <td style="color: var(--text-grey);">${p.service_version || 'N/A'}</td>
+            portsBody.innerHTML = '<tr><td colspan="4" style="color:#333; text-align:center; padding:24px;">No open ports detected</td></tr>';
+        } else {
+            ports.forEach(p => {
+                portsBody.innerHTML += `
+                <tr>
+                    <td><span class="badge badge-port">${p.port}</span></td>
+                    <td style="color:#555;">${p.protocol || 'tcp'}</td>
+                    <td style="color:#ccc;">${p.service_name || '—'}</td>
+                    <td style="color:#555; font-family:'JetBrains Mono',monospace; font-size:12px;">${p.service_version || '—'}</td>
+                </tr>
             `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function renderCveFindings(cveDict) {
-        const container = document.getElementById('cveCardsContainer');
-        container.innerHTML = '';
-        let count = 0;
-
-        Object.keys(cveDict).forEach(serviceKey => {
-            const cves = cveDict[serviceKey];
-            if (Array.isArray(cves) && cves.length > 0) {
-                cves.forEach(cve => {
-                    count++;
-                    const card = document.createElement('div');
-                    card.style.cssText = 'background: #050505; border: 1px solid #222222; border-left: 4px solid var(--accent-red); border-radius: 4px; padding: 1rem;';
-                    
-                    const sev = (cve.severity || 'UNKNOWN').toUpperCase();
-                    let badgeClass = 'badge-low';
-                    if (sev === 'CRITICAL') badgeClass = 'badge-critical';
-                    else if (sev === 'HIGH') badgeClass = 'badge-high';
-                    else if (sev === 'MEDIUM') badgeClass = 'badge-medium';
-
-                    card.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                            <span style="font-weight: bold; color: #ffffff; font-size: 1.05rem;">${cve.cve_id}</span>
-                            <span class="badge-risk ${badgeClass}">${sev} (CVSS ${cve.cvss_score || 'N/A'})</span>
-                        </div>
-                        <p style="color: var(--text-grey); font-size: 0.9rem; margin: 0;">${cve.description || 'No description available.'}</p>
-                    `;
-                    container.appendChild(card);
-                });
-            }
-        });
-
-        if (count === 0) {
-            container.innerHTML = '<p style="color: var(--text-grey);">(no known CVE vulnerabilities indexed for detected services)</p>';
+            });
         }
-    }
 
-    function renderMitreMappings(mappings) {
-        const tbody = document.getElementById('tblMitreBody');
-        tbody.innerHTML = '';
-        if (mappings.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="color: var(--text-grey); padding: 1rem;">(no MITRE ATT&CK mappings identified)</td></tr>';
-            return;
-        }
-        mappings.forEach(m => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td style="color: var(--text-grey);">Port ${m.port}</td>
-                <td style="color: var(--accent-red); font-weight: bold;">${m.technique_id}</td>
-                <td style="color: #ffffff;">${m.technique_name}</td>
-                <td><span style="background: #1a1a1a; color: var(--text-grey); padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.85rem;">${m.tactic}</span></td>
+        // CVE list
+        const cveList = document.getElementById('cveList');
+        cveList.innerHTML = '';
+        if (cves.length === 0) {
+            cveList.innerHTML = '<p style="color:#333; font-size:13px;">No CVEs detected for identified services.</p>';
+        } else {
+            cves.forEach(c => {
+                cveList.innerHTML += `
+                <div style="padding:14px 0; border-bottom:1px solid #141414;">
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                        <span class="badge ${getBadgeClass(c.severity)}">${c.severity || 'N/A'}</span>
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#888;">${c.cve_id}</span>
+                        <span style="font-size:12px; color:#444;">CVSS ${c.cvss_score || 'N/A'}</span>
+                    </div>
+                    <p style="font-size:13px; color:#666; line-height:1.6;">${c.description || ''}</p>
+                </div>
             `;
-            tbody.appendChild(tr);
-        });
-    }
-
-    function renderAiAnalysisTerminal(text) {
-        const terminal = document.getElementById('terminalAiOutput');
-        terminal.textContent = '';
-        
-        // Animated typewriter effect for terminal box
-        let index = 0;
-        const speed = 5; // ms per char chunk
-        const chunkSize = 4;
-
-        function typeChunk() {
-            if (index < text.length) {
-                terminal.textContent += text.slice(index, index + chunkSize);
-                index += chunkSize;
-                setTimeout(typeChunk, speed);
-            }
+            });
         }
-        typeChunk();
+
+        // MITRE table
+        const mitreBody = document.getElementById('mitreBody');
+        mitreBody.innerHTML = '';
+        const mitre = data.mitre_mappings || [];
+        if (mitre.length === 0) {
+            mitreBody.innerHTML = '<tr><td colspan="4" style="color:#333; text-align:center; padding:24px;">No mappings available</td></tr>';
+        } else {
+            mitre.forEach(m => {
+                mitreBody.innerHTML += `
+                <tr>
+                    <td><span class="badge badge-port">${m.port}</span></td>
+                    <td style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#888;">${m.technique_id}</td>
+                    <td style="color:#ccc;">${m.technique_name}</td>
+                    <td style="color:#555;">${m.tactic || '—'}</td>
+                </tr>
+            `;
+            });
+        }
+
+        // AI Analysis — render markdown-ish
+        const ai = data.ai_analysis || 'No analysis available.';
+        document.getElementById('aiBox').innerHTML = ai
+            .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/^(?!<[h|p])(.+)$/gm, '<p>$1</p>');
+
+        // Update data source timestamps with current scan time
+        const nowTime = data.scan_time || new Date().toISOString();
+        const formattedTime = (function(t) {
+            try {
+                const d = new Date(t);
+                return isNaN(d.getTime()) ? t : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch (e) {
+                return t;
+            }
+        })(nowTime);
+
+        document.querySelectorAll('#dataSourcesCard .query-timestamp').forEach(el => {
+            el.textContent = formattedTime;
+        });
+
+        // PDF link
+        document.getElementById('pdfLink').href = '/download/report/' + ip;
+
+        // Scroll to results
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
     }
 
-    function hideAllSections() {
-        document.getElementById('secOpenPorts').style.display = 'none';
-        document.getElementById('secCves').style.display = 'none';
-        document.getElementById('secMitre').style.display = 'none';
-        document.getElementById('secAiAnalysis').style.display = 'none';
-    }
-
-    function showError(msg) {
-        errorBanner.textContent = `[ERROR] ${msg}`;
-        errorBanner.style.display = 'block';
-    }
-});
+    // Auto-trigger local IP scan if mode is 'local' or prefill IP if passed
+    {% if mode == 'local' %}
+    window.onload = function() {
+        scanLocalIP();
+    };
+    {% else %}
+    window.onload = function() {
+        const prefill = sessionStorage.getItem('target_ip_prefill');
+        if (prefill) {
+            sessionStorage.removeItem('target_ip_prefill');
+            const targetInput = document.getElementById('targetIP');
+            if (targetInput) {
+                targetInput.value = prefill;
+            }
+            runScan(prefill);
+        }
+    };
+    {% endif %}
 </script>
 {% endblock %}

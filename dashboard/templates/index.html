@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ThreatOps — System Initialization</title>
-    <!-- Google Fonts: Share Tech Mono -->
+    <!-- Google Fonts: Sora + Share Tech Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
     
     <script>
         // Check localStorage before rendering body — skip intro for returning visitors
@@ -26,14 +26,14 @@
         html, body {
             width: 100%;
             height: 100%;
-            background-color: #080808;
-            color: #ffffff;
-            font-family: 'Share Tech Mono', monospace;
+            background-color: #050505;
+            color: #e8e8e8;
+            font-family: 'Sora', system-ui, sans-serif;
             overflow: hidden;
             position: relative;
         }
 
-        /* Subtle red vignette around screen edges */
+        /* Red vignette around screen edges */
         .vignette {
             position: fixed;
             top: 0;
@@ -41,7 +41,7 @@
             width: 100vw;
             height: 100vh;
             pointer-events: none;
-            box-shadow: inset 0 0 120px rgba(255, 34, 51, 0.25);
+            box-shadow: inset 0 0 180px rgba(255, 34, 51, 0.35);
             z-index: 10;
         }
 
@@ -55,13 +55,13 @@
             pointer-events: none;
             background: linear-gradient(
                 to bottom,
-                rgba(255, 255, 255, 0),
-                rgba(255, 255, 255, 0) 50%,
-                rgba(0, 0, 0, 0.45) 50%,
-                rgba(0, 0, 0, 0.45)
+                rgba(14, 14, 14, 0),
+                rgba(14, 14, 14, 0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
             );
             background-size: 100% 4px;
-            opacity: 0.3;
+            opacity: 0.12;
             animation: scrollScanlines 12s linear infinite;
             z-index: 9;
         }
@@ -82,20 +82,21 @@
             align-items: center;
             justify-content: center;
             width: 100%;
-            max-width: 480px;
-            padding: 0 1rem;
+            max-width: 100vw;
+            padding: 0 4rem;
             z-index: 20;
         }
 
         /* Step 4: Title THREATOPS */
         .title-text {
-            color: #ffffff;
-            font-size: 14px;
-            font-family: 'Share Tech Mono', monospace;
+            color: #e8e8e8;
+            font-size: 48px;
+            font-family: 'Sora', system-ui, sans-serif;
+            font-weight: 600;
             letter-spacing: 0.3em;
             text-transform: uppercase;
-            min-height: 20px;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+            min-height: 56px;
+            text-shadow: 0 0 40px rgba(255, 34, 51, 0.8);
             opacity: 0;
             transition: opacity 0.3s ease;
         }
@@ -104,9 +105,9 @@
         .red-dot {
             width: 8px;
             height: 8px;
-            background-color: #ff2233;
+            background-color: #cc2233;
             border-radius: 50%;
-            box-shadow: 0 0 14px #ff2233;
+            box-shadow: 0 0 14px rgba(204, 34, 51, 0.6);
             opacity: 0;
             transition: opacity 0.2s ease, transform 0.3s ease;
             margin: 6px 0;
@@ -115,15 +116,15 @@
         .red-dot.pulse {
             opacity: 1;
             transform: scale(1.6);
-            box-shadow: 0 0 22px #ff2233;
+            box-shadow: 0 0 18px rgba(204, 34, 51, 0.5);
         }
 
         .red-line {
-            height: 1px;
+            height: 2px;
             background-color: #ff2233;
-            box-shadow: 0 0 10px #ff2233;
+            box-shadow: 0 0 12px rgba(255, 34, 51, 0.6);
             width: 0%;
-            margin: 10px 0;
+            margin: 14px 0;
             transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -133,20 +134,22 @@
 
         /* Step 5 & 7: Subtitle text */
         .subtitle-text {
-            color: #ff2233;
-            font-size: 12px;
-            font-family: 'Share Tech Mono', monospace;
-            letter-spacing: 0.1em;
+            color: #6b6b6b;
+            font-size: 16px;
+            font-family: 'Sora', system-ui, sans-serif;
+            font-weight: 400;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            min-height: 18px;
-            text-shadow: 0 0 8px rgba(255, 34, 51, 0.7);
+            min-height: 22px;
             opacity: 0;
             transition: opacity 0.2s ease;
+            transition: font-size 0.2s ease, color 0.2s ease, text-shadow 0.2s ease;
         }
 
         /* Step 6: Fake loading bar */
         .loading-bar-container {
-            width: 220px;
+            width: 400px;
+            max-width: 90vw;
             height: 4px;
             background-color: #1a1a1a;
             border-radius: 2px;
@@ -159,8 +162,8 @@
         .loading-bar-fill {
             height: 100%;
             width: 0%;
-            background-color: #ff2233;
-            box-shadow: 0 0 12px #ff2233;
+            background-color: #cc2233;
+            box-shadow: 0 0 8px rgba(204, 34, 51, 0.4);
             transition: width 1s linear;
         }
 
@@ -171,7 +174,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: #080808;
+            background-color: #050505;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease-in-out;
@@ -270,6 +273,9 @@
             // Step 7: (3.5s) Loading bar completes, text changes to "ACCESS GRANTED" for 0.3s
             setTimeout(() => {
                 subtitleText.style.color = '#ff2233';
+                subtitleText.style.fontSize = '32px';
+                subtitleText.style.fontWeight = '700';
+                subtitleText.style.textShadow = '0 0 30px rgba(255, 34, 51, 0.7)';
                 subtitleText.textContent = "ACCESS GRANTED";
             }, 3500);
 
