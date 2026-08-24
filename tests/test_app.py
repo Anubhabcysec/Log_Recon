@@ -16,7 +16,7 @@ class TestThreatIntelAppRoutes(unittest.TestCase):
         """Test GET / returns home landing page."""
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'THREATOPS', response.data)
+        self.assertIn(b'LOGRECON', response.data)
 
     def test_analyze_post_valid_and_invalid(self):
         """Test POST /analyze format validation."""

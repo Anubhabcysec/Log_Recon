@@ -1,112 +1,161 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div style="max-width: 960px; margin: 0 auto; color: #e6edf3;">
+<style>
+    .dash-card {
+        background: #0d1117;
+        border: 1px solid #1e2a3a;
+        border-radius: 12px;
+        padding: 28px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .dash-card:hover {
+        border-color: #2f81f7;
+        box-shadow: 0 0 20px rgba(47, 129, 247, 0.08);
+    }
+    .dash-card-left {
+        display: flex;
+        align-items: flex-start;
+        gap: 20px;
+        flex: 1;
+        min-width: 0;
+    }
+    .dash-card-icon {
+        width: 48px;
+        height: 48px;
+        min-width: 48px;
+        border-radius: 10px;
+        background: #161b22;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #2f81f7;
+    }
+    .dash-card-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 6px;
+    }
+    .dash-card-desc {
+        font-size: 14px;
+        color: #8b949e;
+        line-height: 1.55;
+    }
+    .dash-card-link {
+        color: #2f81f7;
+        font-size: 14px;
+        font-weight: 600;
+        text-decoration: none;
+        white-space: nowrap;
+        margin-left: 24px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        transition: gap 0.2s ease;
+    }
+    .dash-card:hover .dash-card-link {
+        gap: 8px;
+    }
+    @keyframes pulseDot {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.4; }
+    }
+    .pulse-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #3fb950;
+        animation: pulseDot 2s ease-in-out infinite;
+    }
+</style>
 
-    <!-- 1. Header -->
-    <div style="margin-bottom: 24px;">
-        <h1 style="font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 6px;">
-            Welcome to ThreatOps
-        </h1>
-        <p style="font-size: 14px; color: #8b949e;">
-            Real-time IP threat intelligence and vulnerability analysis
-        </p>
+<div style="max-width: 860px; margin: 0 auto; color: #e6edf3;">
+
+    <!-- 1. HERO SECTION -->
+    <div style="text-align: center; margin-bottom: 24px; padding-top: 8px;">
+        <div style="font-size: 18px; color: #666; margin-bottom: 6px;">Welcome</div>
+        <h1 style="font-size: 52px; font-weight: 700; color: #ffffff; letter-spacing: -0.03em; margin-bottom: 12px; line-height: 1.1;">LogRecon</h1>
+        <p style="font-size: 16px; color: #555; margin: 0;">AI-powered threat intelligence, vulnerability scanning, and log analysis</p>
     </div>
 
-    <!-- 2. Quote Block -->
-    <div style="background: #161b22; border-left: 4px solid #2f81f7; border-radius: 6px; padding: 14px 18px; margin-bottom: 32px;">
+    <!-- 2. QUOTE BLOCK -->
+    <div style="background: #161b22; border-left: 4px solid #2f81f7; border-radius: 6px; padding: 14px 18px; margin-bottom: 28px;">
         <p style="font-style: italic; color: #c9d1d9; font-size: 14px; margin: 0; line-height: 1.5;">
             "In cybersecurity, visibility is everything. Know your exposure before attackers do."
         </p>
     </div>
 
-    <!-- 3. Core Capabilities -->
-    <div style="margin-bottom: 36px;">
-        <div style="font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #8b949e; margin-bottom: 16px;">
-            Core Capabilities
-        </div>
-        <div class="grid-3" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
-            
-            <!-- Card 1: IP Threat Analysis -->
-            <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s ease;">
-                <div>
-                    <div style="width: 36px; height: 36px; border-radius: 6px; background: rgba(47, 129, 247, 0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #2f81f7;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                        </svg>
-                    </div>
-                    <h3 style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">
-                        IP Threat Analysis
-                    </h3>
-                    <p style="font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 18px;">
-                        Query any IP against AbuseIPDB and Shodan for reputation, open ports, and threat score.
-                    </p>
+    <!-- 3. CAPABILITY CARDS (stacked vertically) -->
+    <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 36px;">
+
+        <!-- Card 1: IP Threat Analysis -->
+        <a href="/scan/ip" class="dash-card">
+            <div class="dash-card-left">
+                <div class="dash-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
                 </div>
                 <div>
-                    <a href="/scan/ip" style="color: #2f81f7; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                        Open &rarr;
-                    </a>
+                    <div class="dash-card-title">IP Threat Analysis</div>
+                    <div class="dash-card-desc">Query any public IP against AbuseIPDB and Shodan. Get real-time abuse reports, open ports, ISP info, and MITRE ATT&CK mapped risk scores.</div>
                 </div>
             </div>
+            <span class="dash-card-link">Open &rarr;</span>
+        </a>
 
-            <!-- Card 2: Local System Scanner -->
-            <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s ease;">
-                <div>
-                    <div style="width: 36px; height: 36px; border-radius: 6px; background: rgba(47, 129, 247, 0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #2f81f7;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <path d="m21 21-4.35-4.35" />
-                        </svg>
-                    </div>
-                    <h3 style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">
-                        Local System Scanner
-                    </h3>
-                    <p style="font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 18px;">
-                        Nmap port discovery + NVD CVE vulnerability lookup + MITRE ATT&CK + Groq AI analysis.
-                    </p>
+        <!-- Card 2: Local System Scanner -->
+        <a href="/scan/local" class="dash-card">
+            <div class="dash-card-left">
+                <div class="dash-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
                 </div>
                 <div>
-                    <a href="/scan/local" style="color: #2f81f7; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                        Open &rarr;
-                    </a>
+                    <div class="dash-card-title">Local System Scanner</div>
+                    <div class="dash-card-desc">Run Nmap on your local machine to discover open ports. Correlates findings with NVD CVE database and generates AI-powered vulnerability analysis with downloadable PDF.</div>
                 </div>
             </div>
+            <span class="dash-card-link">Open &rarr;</span>
+        </a>
 
-            <!-- Card 3: Threat History -->
-            <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: border-color 0.2s ease;">
-                <div>
-                    <div style="width: 36px; height: 36px; border-radius: 6px; background: rgba(47, 129, 247, 0.15); display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #2f81f7;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <polyline points="12 6 12 12 16 14" />
-                        </svg>
-                    </div>
-                    <h3 style="font-size: 16px; font-weight: 600; color: #ffffff; margin-bottom: 8px;">
-                        Threat History
-                    </h3>
-                    <p style="font-size: 13px; color: #8b949e; line-height: 1.5; margin-bottom: 18px;">
-                        Audit and view all past scans, generated PDF assessments, and threat logs.
-                    </p>
+        <!-- Card 3: Log Analyzer -->
+        <a href="/logs" class="dash-card">
+            <div class="dash-card-left">
+                <div class="dash-card-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                        <polyline points="14 2 14 8 20 8" />
+                        <line x1="16" y1="13" x2="8" y2="13" />
+                        <line x1="16" y1="17" x2="8" y2="17" />
+                        <polyline points="10 9 9 9 8 9" />
+                    </svg>
                 </div>
                 <div>
-                    <a href="/history" style="color: #2f81f7; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
-                        Open &rarr;
-                    </a>
+                    <div class="dash-card-title">Log Analyzer</div>
+                    <div class="dash-card-desc">Upload SSH, nginx, Apache, syslog, or Windows Event Log files. Groq AI reads through every line and explains what happened in plain English, flagging any suspicious activity.</div>
                 </div>
             </div>
+            <span class="dash-card-link">Open &rarr;</span>
+        </a>
 
-        </div>
     </div>
 
-    <!-- 4. System Pulse Section -->
-    <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 32px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-            <div>
-                <span style="font-size: 15px; font-weight: 600; color: #ffffff;">System Pulse</span>
-                <span style="font-size: 12px; color: #8b949e; margin-left: 8px;">(Recent Scan History)</span>
-            </div>
-            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #3fb950; background: rgba(63, 185, 80, 0.1); border: 1px solid rgba(63, 185, 80, 0.25); border-radius: 12px; padding: 2px 8px;">
-                <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #3fb950;"></span>
+    <!-- 4. SYSTEM PULSE -->
+    <div style="background: #0d1117; border: 1px solid #1e2a3a; border-radius: 12px; padding: 24px 28px; margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <span style="font-size: 16px; font-weight: 600; color: #ffffff;">System Pulse</span>
+            <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-family: 'JetBrains Mono', monospace; color: #3fb950; background: rgba(63, 185, 80, 0.08); border: 1px solid rgba(63, 185, 80, 0.2); border-radius: 12px; padding: 3px 10px;">
+                <span class="pulse-dot"></span>
                 Live
             </div>
         </div>
@@ -114,7 +163,7 @@
         <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
                 <thead>
-                    <tr style="border-bottom: 1px solid #30363d; color: #8b949e; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">
+                    <tr style="border-bottom: 1px solid #1e2a3a; color: #555; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;">
                         <th style="padding: 10px 12px;">Timestamp</th>
                         <th style="padding: 10px 12px;">IP Address</th>
                         <th style="padding: 10px 12px;">Risk Level</th>
@@ -124,7 +173,7 @@
                 <tbody>
                     {% if recent_history and recent_history|length > 0 %}
                         {% for item in recent_history %}
-                        <tr style="border-bottom: 1px solid #21262d;">
+                        <tr style="border-bottom: 1px solid #151b24;">
                             <td style="padding: 12px; color: #8b949e; font-size: 12px;">
                                 {{ item.searched_at.strftime('%Y-%m-%d %H:%M:%S UTC') if item.searched_at else 'N/A' }}
                             </td>
@@ -148,7 +197,7 @@
                                 </span>
                             </td>
                             <td style="padding: 12px;">
-                                <span style="color: #8b949e; font-size: 12px; background: #21262d; border-radius: 4px; padding: 2px 6px;">
+                                <span style="color: #8b949e; font-size: 12px; background: #161b22; border-radius: 4px; padding: 2px 6px;">
                                     Completed
                                 </span>
                             </td>
@@ -156,8 +205,8 @@
                         {% endfor %}
                     {% else %}
                         <tr>
-                            <td colspan="4" style="padding: 24px; text-align: center; color: #8b949e; font-size: 13px;">
-                                No recent scan events found. Run a scan on <a href="/scan" style="color: #2f81f7; text-decoration: none;">IP Scanner</a>.
+                            <td colspan="4" style="padding: 32px; text-align: center; color: #555; font-size: 13px;">
+                                No scans recorded yet. Run your first scan above.
                             </td>
                         </tr>
                     {% endif %}

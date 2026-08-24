@@ -315,10 +315,11 @@
         } else {
             let ipHtml = '';
             ips.forEach(ip => {
+                const encodedIp = encodeURIComponent(ip);
                 ipHtml += `
-                    <a href="/scan/ip" onclick="sessionStorage.setItem('target_ip_prefill', '${ip}')" class="badge badge-port" style="text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;" title="Scan this IP">
+                    <a href="/scan/ip?ip=${encodedIp}" target="_blank" class="badge badge-port" style="text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 13px;" title="Scan ${ip} in a new tab">
                         <span>${ip}</span>
-                        <span style="font-size: 10px; color: #666;">&rarr;</span>
+                        <span style="font-size: 11px; color: #2f81f7;">&rarr;</span>
                     </a>
                 `;
             });

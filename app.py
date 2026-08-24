@@ -29,6 +29,9 @@ app.config.from_object(Config)
 engine = create_tables()
 SessionLocal = sessionmaker(bind=engine)
 
+# Custom Jinja2 filter to parse JSON strings in templates
+app.jinja_env.filters['from_json'] = lambda s: json.loads(s) if s else []
+
 
 def is_valid_ip(ip_str):
     """Validate whether the given string is a valid IPv4 or IPv6 address format."""
@@ -189,13 +192,15 @@ def api_local_ip_underscore():
 @app.route('/scanner')
 def scanner():
     """Scanner page for running deep port scan, CVE lookup, MITRE mapping, and AI analysis."""
-    return render_template('scanner.html', mode='ip')
+    target_ip = request.args.get('ip', '').strip()
+    return render_template('scanner.html', mode='ip', target_ip=target_ip)
 
 
 @app.route('/scan/ip')
 def scan_ip():
     """Scanner page configured for public IP address analysis."""
-    return render_template('scanner.html', mode='ip')
+    target_ip = request.args.get('ip', '').strip()
+    return render_template('scanner.html', mode='ip', target_ip=target_ip)
 
 
 @app.route('/scan/local')
@@ -208,6 +213,17 @@ def scan_local():
 def logs():
     """Renders the Log Analyzer page."""
     return render_template('logs.html')
+
+
+@app.route('/reports')
+def reports():
+    """Renders the Reports page showing all past scan reports."""
+    session = SessionLocal()
+    try:
+        all_reports = session.query(IPReport).order_by(IPReport.searched_at.desc()).all()
+        return render_template('reports.html', reports=all_reports)
+    finally:
+        session.close()
 
 
 @app.route('/api/analyze-log', methods=['POST'])

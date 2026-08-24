@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto; color: #e6edf3;">
+
+    <!-- Page Header -->
+    <div style="margin-bottom: 28px;">
+        <h1 style="font-size: 24px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 6px;">Reports</h1>
+        <p style="font-size: 14px; color: #555;">All generated threat intelligence reports</p>
+    </div>
+
+    <!-- Reports Table -->
+    <div style="background: #0d1117; border: 1px solid #1e2a3a; border-radius: 12px; padding: 24px 28px;">
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1e2a3a; color: #555; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;">
+                        <th style="padding: 10px 12px;">Date</th>
+                        <th style="padding: 10px 12px;">IP Address</th>
+                        <th style="padding: 10px 12px;">Risk Level</th>
+                        <th style="padding: 10px 12px;">Open Ports</th>
+                        <th style="padding: 10px 12px;">CVEs Found</th>
+                        <th style="padding: 10px 12px; text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if reports and reports|length > 0 %}
+                        {% for report in reports %}
+                        <tr style="border-bottom: 1px solid #151b24; transition: background 0.15s ease;"
+                            onmouseover="this.style.background='#161b22'"
+                            onmouseout="this.style.background='transparent'">
+                            <td style="padding: 14px 12px; color: #8b949e; font-size: 12px; white-space: nowrap;">
+                                {{ report.searched_at.strftime('%Y-%m-%d %H:%M') if report.searched_at else 'N/A' }}
+                            </td>
+                            <td style="padding: 14px 12px;">
+                                <a href="/report/{{ report.ip_address }}" style="color: #58a6ff; text-decoration: none; font-weight: 500;">
+                                    {{ report.ip_address }}
+                                </a>
+                            </td>
+                            <td style="padding: 14px 12px;">
+                                <span style="display: inline-flex; align-items: center; gap: 6px;">
+                                    {% if report.risk_level in ['HIGH', 'CRITICAL'] %}
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #f85149;"></span>
+                                        <span style="color: #f85149; font-weight: 600;">{{ report.risk_level }}</span>
+                                    {% elif report.risk_level == 'MEDIUM' %}
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #d29922;"></span>
+                                        <span style="color: #d29922; font-weight: 600;">{{ report.risk_level }}</span>
+                                    {% else %}
+                                        <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #3fb950;"></span>
+                                        <span style="color: #3fb950; font-weight: 600;">{{ report.risk_level or 'LOW' }}</span>
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td style="padding: 14px 12px; color: #c9d1d9;">
+                                {% set ports = report.open_ports | default('[]', true) %}
+                                {% if ports and ports != '[]' %}
+                                    {{ ports | from_json | length if ports != '[]' else 0 }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </td>
+                            <td style="padding: 14px 12px; color: #c9d1d9;">
+                                {% set vulns = report.vulnerabilities | default('[]', true) %}
+                                {% if vulns and vulns != '[]' %}
+                                    {{ vulns | from_json | length if vulns != '[]' else 0 }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </td>
+                            <td style="padding: 14px 12px; text-align: right; white-space: nowrap;">
+                                <a href="/report/{{ report.ip_address }}"
+                                   style="color: #2f81f7; text-decoration: none; font-size: 12px; font-weight: 600; background: rgba(47,129,247,0.1); border: 1px solid rgba(47,129,247,0.25); border-radius: 6px; padding: 5px 12px; margin-right: 6px; transition: background 0.2s ease;"
+                                   onmouseover="this.style.background='rgba(47,129,247,0.2)'"
+                                   onmouseout="this.style.background='rgba(47,129,247,0.1)'">
+                                    View
+                                </a>
+                                <a href="/download/report/{{ report.ip_address }}"
+                                   style="color: #8b949e; text-decoration: none; font-size: 12px; font-weight: 600; background: #161b22; border: 1px solid #30363d; border-radius: 6px; padding: 5px 12px; transition: border-color 0.2s ease;"
+                                   onmouseover="this.style.borderColor='#8b949e'"
+                                   onmouseout="this.style.borderColor='#30363d'">
+                                    PDF ↓
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" style="padding: 48px; text-align: center;">
+                                <div style="margin-bottom: 12px;">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="1.5" style="margin: 0 auto;">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                        <polyline points="14 2 14 8 20 8" />
+                                        <line x1="16" y1="13" x2="8" y2="13" />
+                                        <line x1="16" y1="17" x2="8" y2="17" />
+                                    </svg>
+                                </div>
+                                <div style="color: #555; font-size: 14px; font-family: 'Inter', sans-serif; margin-bottom: 6px;">No reports generated yet.</div>
+                                <div style="color: #444; font-size: 13px; font-family: 'Inter', sans-serif;">
+                                    Run a scan from <a href="/scan/ip" style="color: #2f81f7; text-decoration: none;">IP Scanner</a> or <a href="/scan/local" style="color: #2f81f7; text-decoration: none;">Local Scanner</a> to generate your first report.
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if reports and reports|length > 0 %}
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #1e2a3a; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 12px; color: #444; font-family: 'Inter', sans-serif;">{{ reports|length }} report{{ 's' if reports|length != 1 else '' }} total</span>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

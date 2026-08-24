@@ -418,14 +418,18 @@
     };
     {% else %}
     window.onload = function() {
-        const prefill = sessionStorage.getItem('target_ip_prefill');
-        if (prefill) {
+        // 1. Check template variable or URL query param or sessionStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        let targetParam = "{{ target_ip | default('') }}" || urlParams.get('ip') || sessionStorage.getItem('target_ip_prefill');
+        
+        if (targetParam && targetParam.trim()) {
+            targetParam = targetParam.trim();
             sessionStorage.removeItem('target_ip_prefill');
             const targetInput = document.getElementById('targetIP');
             if (targetInput) {
-                targetInput.value = prefill;
+                targetInput.value = targetParam;
             }
-            runScan(prefill);
+            runScan(targetParam);
         }
     };
     {% endif %}

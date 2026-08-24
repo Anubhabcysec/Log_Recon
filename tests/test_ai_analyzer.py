@@ -115,7 +115,7 @@ class TestAIAnalyzer(unittest.TestCase):
             self.assertEqual(result, "## Risk Overview\nRisk is HIGH.")
             mock_client.chat.completions.create.assert_called_once()
             call_kwargs = mock_client.chat.completions.create.call_args[1]
-            self.assertEqual(call_kwargs["model"], "llama-3.3-70b-versatile")
+            self.assertEqual(call_kwargs["model"], "groq/compound-mini")
 
     @patch("detection.ai_analyzer.Config")
     def test_analyze_with_ai_api_exception(self, mock_config):
