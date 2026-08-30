@@ -77,6 +77,24 @@ class ScheduledScan(Base):
         }
 
 
+class FalsePositive(Base):
+    """Model storing marked false positive CVE findings."""
+    __tablename__ = 'false_positives'
+
+    id = Column(Integer, primary_key=True)
+    cve_id = Column(String(50), nullable=False, index=True)
+    service_name = Column(String(100), default='', nullable=True)
+    marked_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "cve_id": self.cve_id,
+            "service_name": self.service_name or "",
+            "marked_at": self.marked_at.isoformat() if self.marked_at else None
+        }
+
+
 def create_tables(db_path=None):
     """Creates database tables in database/database.db using create_engine directly."""
     if db_path is None:

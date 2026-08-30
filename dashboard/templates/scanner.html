@@ -423,15 +423,33 @@
         if (cves.length === 0) {
             cveList.innerHTML = '<p style="color:#333; font-size:13px;">No CVEs detected for identified services.</p>';
         } else {
-            cves.forEach(c => {
+            cves.forEach((c, idx) => {
+                const cveIdSafe = (c.cve_id || '').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const rowId = `cve-row-${cveIdSafe}-${idx}`;
+                const epssHtml = (c.epss_score !== undefined && c.epss_score !== null)
+                    ? `<div style="font-size: 11px; color: #777; font-family: 'JetBrains Mono', monospace; margin-top: 4px;">Exploit probability: ${(c.epss_score * 100).toFixed(1)}%</div>`
+                    : '';
+
                 cveList.innerHTML += `
-                <div style="padding:14px 0; border-bottom:1px solid #141414;">
-                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                        <span class="badge ${getBadgeClass(c.severity)}">${c.severity || 'N/A'}</span>
-                        <span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#888;">${c.cve_id}</span>
-                        <span style="font-size:12px; color:#444;">CVSS ${c.cvss_score || 'N/A'}</span>
+                <div id="${rowId}" style="padding:14px 0; border-bottom:1px solid #141414; transition: all 0.3s ease;">
+                    <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:6px;">
+                        <div>
+                            <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                                <span class="badge ${getBadgeClass(c.severity)}">${c.severity || 'N/A'}</span>
+                                <span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#888;">${c.cve_id}</span>
+                                <span style="font-size:12px; color:#444;">CVSS ${c.cvss_score || 'N/A'}</span>
+                            </div>
+                            ${epssHtml}
+                        </div>
+                        <button type="button" class="btn-secondary" 
+                            style="font-size:11px; padding:4px 8px; color:#888; border-color:#222; display:flex; align-items:center; gap:4px; cursor:pointer;" 
+                            title="Mark as False Positive"
+                            onclick="markFalsePositive('${c.cve_id}', '${(c.service_name || '').replace(/'/g, "\\'")}', '${rowId}')">
+                            <span>👎</span>
+                            <span>False Positive</span>
+                        </button>
                     </div>
-                    <p style="font-size:13px; color:#666; line-height:1.6;">${c.description || ''}</p>
+                    <p style="font-size:13px; color:#666; line-height:1.6; margin-top:4px;">${c.description || ''}</p>
                 </div>
             `;
             });
@@ -484,6 +502,46 @@
 
         // Scroll to results
         document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function markFalsePositive(cveId, serviceName, rowId) {
+        if (!cveId) return;
+
+        const rowEl = document.getElementById(rowId);
+        if (rowEl) {
+            rowEl.style.opacity = '0.5';
+        }
+
+        try {
+            const res = await fetch('/api/false-positive/mark', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cve_id: cveId, service_name: serviceName })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                alert('Could not mark false positive: ' + (err.error || 'Unknown error'));
+                if (rowEl) rowEl.style.opacity = '1';
+                return;
+            }
+
+            if (rowEl) {
+                rowEl.innerHTML = `
+                    <div style="padding: 10px 14px; background: #121212; border-radius: 6px; border: 1px dashed #2a2a2a; color: #777; font-size: 12px; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; justify-content: space-between;">
+                        <span><strong style="color:#aaa;">${cveId}</strong> &bull; Marked as false positive</span>
+                        <span style="color:#27c93f;">✓ Saved</span>
+                    </div>
+                `;
+                setTimeout(() => {
+                    rowEl.style.display = 'none';
+                }, 2500);
+            }
+
+        } catch (e) {
+            if (rowEl) rowEl.style.opacity = '1';
+            alert('Failed to contact server to mark false positive.');
+        }
     }
 
     // Auto-trigger local IP scan if mode is 'local' or prefill IP if passed

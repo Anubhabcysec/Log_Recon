@@ -78,9 +78,53 @@ def _format_published(date_str: str) -> str:
         return date_str
 
 
+def _get_false_positive_ids() -> set:
+    """Fetch all marked false positive CVE IDs from the database."""
+    try:
+        from database.models import FalsePositive, create_tables
+        from sqlalchemy.orm import sessionmaker
+
+        engine = create_tables()
+        Session = sessionmaker(bind=engine)
+        session = Session()
+        try:
+            fps = session.query(FalsePositive.cve_id).all()
+            return {fp[0] for fp in fps if fp[0]}
+        finally:
+            session.close()
+    except Exception as e:
+        print(f"[cve_lookup] Could not query false positives: {e}")
+        return set()
+
+
+def _fetch_epss(cve_id: str) -> tuple:
+    """
+    Query FIRST.org EPSS API for a given CVE ID.
+    Returns:
+        (epss_score, epss_percentile) - both float or None if failed.
+    """
+    if not cve_id or cve_id == "N/A":
+        return None, None
+    try:
+        url = f"https://api.first.org/data/v1/epss?cve={cve_id}"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            items = data.get("data", [])
+            if items:
+                item = items[0]
+                score = float(item.get("epss")) if item.get("epss") is not None else None
+                percentile = float(item.get("percentile")) if item.get("percentile") is not None else None
+                return score, percentile
+    except Exception as exc:
+        print(f"[cve_lookup] EPSS lookup failed for {cve_id}: {exc}")
+    return None, None
+
+
 def get_cves_for_service(service_name: str, version: str) -> list:
     """
     Query the NVD API v2.0 for CVEs related to a service and version.
+    Filters out any false positive marked CVEs and enriches each result with EPSS score and percentile.
 
     Args:
         service_name: The name of the service/software (e.g. "openssh", "nginx").
@@ -88,11 +132,13 @@ def get_cves_for_service(service_name: str, version: str) -> list:
 
     Returns:
         A list of up to 5 dicts (most recent first), each containing:
-            - cve_id         (str)   e.g. "CVE-2023-12345"
-            - description    (str)   English description of the vulnerability
-            - cvss_score     (float) CVSS base score (0.0 if unavailable)
-            - severity       (str)   "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN"
-            - published_date (str)   "YYYY-MM-DD"
+            - cve_id          (str)   e.g. "CVE-2023-12345"
+            - description     (str)   English description of the vulnerability
+            - cvss_score      (float) CVSS base score (0.0 if unavailable)
+            - severity        (str)   "CRITICAL" | "HIGH" | "MEDIUM" | "LOW" | "UNKNOWN"
+            - published_date  (str)   "YYYY-MM-DD"
+            - epss_score      (float | None) EPSS exploit probability score
+            - epss_percentile (float | None) EPSS percentile ranking
         Returns an empty list on any error.
     """
     keyword = f"{service_name} {version}".strip()
@@ -127,12 +173,17 @@ def get_cves_for_service(service_name: str, version: str) -> list:
         return []
 
     vulnerabilities = data.get("vulnerabilities", [])
+    false_positives = _get_false_positive_ids()
     results = []
 
     for entry in vulnerabilities[:MAX_RESULTS]:
         cve_item = entry.get("cve", {})
 
         cve_id = cve_item.get("id", "N/A")
+        # Filter out false positives
+        if cve_id in false_positives:
+            continue
+
         published_date = _format_published(cve_item.get("published", ""))
 
         # Extract English description (fall back to first available)
@@ -146,6 +197,7 @@ def get_cves_for_service(service_name: str, version: str) -> list:
             description = descriptions[0].get("value", "No description available.")
 
         cvss_score, severity = _get_cvss_info(cve_item)
+        epss_score, epss_percentile = _fetch_epss(cve_id)
 
         results.append(
             {
@@ -154,7 +206,10 @@ def get_cves_for_service(service_name: str, version: str) -> list:
                 "cvss_score": cvss_score,
                 "severity": severity,
                 "published_date": published_date,
+                "epss_score": epss_score,
+                "epss_percentile": epss_percentile,
             }
         )
 
     return results
+

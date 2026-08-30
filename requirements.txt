@@ -12,3 +12,4 @@ flask-sse
 redis
 python-evtx
 chardet
+gunicorn

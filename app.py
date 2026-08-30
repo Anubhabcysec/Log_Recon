@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, f
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
-from database.models import SearchHistory, IPReport, ScheduledScan, create_tables
+from database.models import SearchHistory, IPReport, ScheduledScan, FalsePositive, create_tables
 from detection.risk_engine import analyze_ip
 from parser.nmap_scanner import scan_target, get_local_ip
 from parser.log_parser import parse_text_log, parse_evtx_log, find_local_logs
@@ -669,6 +669,56 @@ def api_scheduler_remove(scan_id):
         session.close()
 
 
+@app.route('/api/false-positive/mark', methods=['POST'])
+def api_false_positive_mark():
+    """
+    POST route accepting JSON {cve_id, service_name}.
+    Saves the record to the FalsePositive table.
+    """
+    data = request.get_json(silent=True) or {}
+    cve_id = data.get('cve_id', '').strip()
+    service_name = data.get('service_name', '').strip()
+
+    if not cve_id:
+        return jsonify({"error": "cve_id is required."}), 400
+
+    session = SessionLocal()
+    try:
+        existing = session.query(FalsePositive).filter(FalsePositive.cve_id == cve_id).first()
+        if existing:
+            return jsonify({"status": "exists", "message": f"{cve_id} is already marked as false positive."})
+
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        fp = FalsePositive(
+            cve_id=cve_id,
+            service_name=service_name,
+            marked_at=now
+        )
+        session.add(fp)
+        session.commit()
+        return jsonify({"status": "success", "false_positive": fp.to_dict()}), 201
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/false-positive/list', methods=['GET'])
+def api_false_positive_list():
+    """
+    GET route returning all marked false positives as JSON.
+    """
+    session = SessionLocal()
+    try:
+        fps = session.query(FalsePositive).order_by(FalsePositive.marked_at.desc()).all()
+        return jsonify([fp.to_dict() for fp in fps])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
 @app.route('/download/report/<ip>')
 def download_report(ip):
     """GET route serving the generated PDF report for download."""
@@ -695,5 +745,7 @@ def download_report(ip):
 
 if __name__ == '__main__':
     start_scheduler()
-    app.run(debug=True, use_reloader=False)
+    import os
+port = int(os.environ.get('PORT', 5000))
+app.run(debug=False, host='0.0.0.0', port=port, use_reloader=False)
 
