@@ -9,11 +9,9 @@ _MAX_TOKENS = 2048
 _TEMPERATURE = 0.3
 
 _SYSTEM_PROMPT = (
-    "You are an expert cybersecurity analyst specialising in incident response "
-    "and vulnerability assessment. Your job is to analyse network scan results, "
-    "CVE data, and MITRE ATT&CK technique mappings, then produce a clear, "
-    "actionable security report. Be concise, prioritise the most impactful "
-    "findings, and always give specific, practical remediation advice."
+    "You are a friendly cybersecurity assistant explaining scan results to a non-technical person. "
+    "Use simple everyday language. Avoid jargon. If you must use a technical term, explain it in brackets immediately after. "
+    "Be concise. Maximum 3-4 sentences per section. Think of explaining to a smart friend who knows nothing about cybersecurity."
 )
 
 _USER_PROMPT_TEMPLATE = """\
@@ -34,27 +32,22 @@ Open Ports:
 
 ---
 
-Please produce a structured security assessment covering ALL of the following
+Please produce a clear, non-technical security summary covering ALL of the following
 sections. Use markdown headings:
 
-## Risk Overview
-Give an overall risk rating (CRITICAL / HIGH / MEDIUM / LOW) with a 2-3
-sentence executive summary.
+## What This Scan Found
+One paragraph, plain English, what was discovered on this device/IP.
 
-## Prioritised Vulnerabilities
-Rank the identified vulnerabilities by exploitability and potential impact.
-For each, state why it is dangerous and how easy it is to exploit.
+## Should You Be Worried?
+Overall risk in one sentence. Use simple words like "This looks safe", "There are some concerns", or "This needs urgent attention".
 
-## Critical Attack Vectors
-Identify the most likely paths an attacker would take to compromise this host.
-Reference the relevant MITRE techniques.
+## The 3 Most Important Things
+Three bullet points maximum. Each one: what the problem is + why it matters to a normal person + one simple thing they can do about it.
 
-## Immediate Remediation Steps
-List specific, actionable steps the defender should take right now (ordered by
-priority). Include commands or configuration changes where applicable.
+## What To Do Next
+Maximum 3 simple action steps. Written like texting a friend instructions, not a technical manual.
 
-## Long-Term Hardening Recommendations
-Suggest broader security improvements beyond the immediate fixes.
+Keep total response under 400 words.
 """
 
 

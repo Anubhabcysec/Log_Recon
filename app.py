@@ -3,20 +3,23 @@ import json
 import ipaddress
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, send_file, Response
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
-from database.models import SearchHistory, IPReport, create_tables
+from database.models import SearchHistory, IPReport, ScheduledScan, create_tables
 from detection.risk_engine import analyze_ip
 from parser.nmap_scanner import scan_target, get_local_ip
-from parser.log_parser import parse_text_log, parse_evtx_log
+from parser.log_parser import parse_text_log, parse_evtx_log, find_local_logs
 from detection.cve_lookup import get_cves_for_service
 from detection.mitre_mapper import map_ports_to_mitre
 from detection.ai_analyzer import analyze_with_ai
 from detection.log_analyzer import analyze_log_with_ai
 from response.pdf_generator import generate_pdf_report
+from response.notifier import send_telegram_alert
+from response.scheduler import start_scheduler
 import tempfile
+from datetime import timedelta
 
 app = Flask(
     __name__,
@@ -139,6 +142,12 @@ def api_analyze(ip):
 
     # Call analyze_ip from detection.risk_engine
     result = analyze_ip(ip)
+
+    # Send Telegram alert if risk meets configured threshold
+    try:
+        send_telegram_alert(result)
+    except Exception as e:
+        print(f"[api_analyze] Telegram alert error: {e}")
 
     return jsonify({
         "status": "success",
@@ -317,6 +326,141 @@ def api_analyze_log():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/api/local-logs', methods=['GET'])
+def api_local_logs():
+    """
+    GET route returning discovered log files from local Windows system locations.
+    """
+    try:
+        logs = find_local_logs()
+        return jsonify(logs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/analyze-local-log', methods=['POST'])
+def api_analyze_local_log():
+    """
+    POST route accepting JSON {"path": "<filepath>"}.
+    Reads the file from disk, parses it (.evtx or text), analyzes with AI, and returns results.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        file_path = data.get('path', '').strip()
+
+        if not file_path:
+            return jsonify({"error": "No file path provided."}), 400
+
+        if not os.path.exists(file_path):
+            return jsonify({"error": f"File not found: {file_path}"}), 404
+
+        if not os.path.isfile(file_path):
+            return jsonify({"error": f"Path is not a regular file: {file_path}"}), 400
+
+        is_evtx = file_path.lower().endswith('.evtx')
+
+        if is_evtx:
+            parsed_data = parse_evtx_log(file_path)
+            raw_sample = "\n".join(parsed_data.get("suspicious_lines", []) + parsed_data.get("error_lines", []))[:3000]
+        else:
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                    raw_text = f.read()
+            except Exception as read_err:
+                return jsonify({"error": f"Could not read file: {read_err}"}), 500
+
+            parsed_data = parse_text_log(raw_text)
+            raw_sample = raw_text[:3000]
+
+        ai_analysis = analyze_log_with_ai(parsed_data, raw_sample)
+
+        suspicious_count = len(parsed_data.get("suspicious_lines", []))
+        error_count = len(parsed_data.get("error_lines", []))
+
+        if suspicious_count >= 10:
+            severity = "CRITICAL"
+        elif suspicious_count >= 5:
+            severity = "HIGH"
+        elif suspicious_count >= 1:
+            severity = "MEDIUM"
+        elif error_count > 0:
+            severity = "LOW"
+        else:
+            severity = "LOW"
+
+        return jsonify({
+            "log_type": parsed_data.get("log_type", "unknown"),
+            "total_lines": parsed_data.get("total_lines", 0),
+            "error_count": error_count,
+            "suspicious_count": suspicious_count,
+            "suspicious_lines": parsed_data.get("suspicious_lines", []),
+            "error_lines": parsed_data.get("error_lines", []),
+            "ip_addresses": parsed_data.get("ip_addresses", []),
+            "ai_analysis": ai_analysis,
+            "severity": severity,
+            "file_name": os.path.basename(file_path),
+            "file_path": file_path
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/scan/stream')
+def api_scan_stream():
+    """
+    SSE stream endpoint for live terminal scan updates.
+    Accepts target_ip query parameter.
+    Streams scan progress events line by line formatted as `data: <message>\n\n`.
+    """
+    target_ip = request.args.get('target_ip', '').strip()
+    if not target_ip or not is_valid_ip(target_ip):
+        def error_gen():
+            yield f"data: Invalid target IP address: {target_ip}\n\n"
+        return Response(error_gen(), mimetype='text/event-stream')
+
+    def generate():
+        import time
+        yield f"data: Initializing scan on {target_ip}...\n\n"
+        time.sleep(0.3)
+
+        yield "data: Running Nmap port discovery...\n\n"
+        # Run port scan
+        scan_results = scan_target(target_ip)
+        open_ports = scan_results.get("open_ports", [])
+        time.sleep(0.3)
+
+        if open_ports:
+            for p in open_ports:
+                port = p.get("port", "")
+                service = p.get("service_name") or "unknown"
+                yield f"data: Discovered open port {port}/tcp ({service})\n\n"
+                time.sleep(0.2)
+        else:
+            yield "data: No open ports discovered on standard probes.\n\n"
+            time.sleep(0.2)
+
+        yield "data: Querying NVD vulnerability database...\n\n"
+        time.sleep(0.3)
+
+        yield "data: Mapping to MITRE ATT&CK framework...\n\n"
+        time.sleep(0.3)
+
+        yield "data: Running Groq AI analysis...\n\n"
+        time.sleep(0.3)
+
+        yield "data: Scan complete.\n\n"
+
+    return Response(
+        generate(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no'
+        }
+    )
+
+
 @app.route('/api/scan', methods=['POST'])
 def api_scan():
     """
@@ -426,7 +570,20 @@ def api_scan():
         except Exception as pdf_err:
             print(f"[api_scan] PDF generation error: {pdf_err}")
 
-        # 8. Return the combined result as JSON
+        # 8. Send Telegram alert if threshold met
+        scan_payload = {
+            "target_ip": target_ip,
+            "scan_time": scan_time,
+            "risk_level": risk_level,
+            "open_ports": open_ports,
+            "cve_findings": cve_findings
+        }
+        try:
+            send_telegram_alert(scan_payload)
+        except Exception as alert_err:
+            print(f"[api_scan] Telegram alert error: {alert_err}")
+
+        # 9. Return the combined result as JSON
         return jsonify({
             "target_ip": target_ip,
             "scan_time": scan_time,
@@ -444,6 +601,72 @@ def api_scan():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/scheduler/list', methods=['GET'])
+def api_scheduler_list():
+    """Returns all scheduled scans as JSON."""
+    session = SessionLocal()
+    try:
+        scans = session.query(ScheduledScan).order_by(ScheduledScan.created_at.desc()).all()
+        return jsonify([s.to_dict() for s in scans])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/scheduler/add', methods=['POST'])
+def api_scheduler_add():
+    """Accepts target_ip and interval_hours, creates a new ScheduledScan record."""
+    data = request.get_json(silent=True) or {}
+    target_ip = data.get('target_ip', '').strip()
+    try:
+        interval_hours = int(data.get('interval_hours', 24))
+    except (ValueError, TypeError):
+        interval_hours = 24
+
+    if not target_ip or not is_valid_ip(target_ip):
+        return jsonify({"error": f"'{target_ip}' is not a valid IPv4 or IPv6 address."}), 400
+
+    session = SessionLocal()
+    try:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        # Next run is immediately or calculated from now
+        new_scan = ScheduledScan(
+            target_ip=target_ip,
+            interval_hours=interval_hours,
+            last_run=None,
+            next_run=now,
+            active=1,
+            created_at=now
+        )
+        session.add(new_scan)
+        session.commit()
+        return jsonify({"status": "success", "scan": new_scan.to_dict()}), 201
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/scheduler/remove/<int:scan_id>', methods=['DELETE'])
+def api_scheduler_remove(scan_id):
+    """Deletes a scheduled scan by ID."""
+    session = SessionLocal()
+    try:
+        scan = session.query(ScheduledScan).filter(ScheduledScan.id == scan_id).first()
+        if not scan:
+            return jsonify({"error": "Scheduled scan not found."}), 404
+        session.delete(scan)
+        session.commit()
+        return jsonify({"status": "success", "message": f"Scheduled scan {scan_id} removed."})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
 
 @app.route('/download/report/<ip>')
@@ -471,4 +694,6 @@ def download_report(ip):
 
 
 if __name__ == '__main__':
+    start_scheduler()
     app.run(debug=True, use_reloader=False)
+

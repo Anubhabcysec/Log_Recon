@@ -279,3 +279,69 @@ def parse_evtx_log(filepath: str) -> dict:
         "ip_addresses": all_ips,
         "time_range": time_range
     }
+
+
+def find_local_logs() -> list:
+    """
+    Scans standard Windows log file locations:
+      - C:\\Windows\\System32\\winevt\\Logs\\Application.evtx
+      - C:\\Windows\\System32\\winevt\\Logs\\System.evtx
+      - C:\\Users\\{username}\\AppData\\Local\\Temp\\ (*.log files)
+
+    Returns:
+        list of dicts: [
+            {"name": str, "path": str, "size_kb": float, "type": str}, ...
+        ]
+    """
+    import os
+
+    found = []
+    
+    # 1. System Windows Event Logs
+    sys_paths = [
+        (r"C:\Windows\System32\winevt\Logs\Application.evtx", "Application.evtx", "EVTX"),
+        (r"C:\Windows\System32\winevt\Logs\System.evtx", "System.evtx", "EVTX"),
+    ]
+
+    for path, name, log_type in sys_paths:
+        if os.path.exists(path):
+            try:
+                size_bytes = os.path.getsize(path)
+                found.append({
+                    "name": name,
+                    "path": path,
+                    "size_kb": round(size_bytes / 1024, 1),
+                    "type": log_type
+                })
+            except (OSError, PermissionError):
+                # Include path with 0 kb if accessible or skip
+                pass
+
+    # 2. Temp directory logs for current user
+    username = os.environ.get('USERNAME', '')
+    if username:
+        temp_dir = os.path.join(r"C:\Users", username, r"AppData\Local\Temp")
+    else:
+        temp_dir = os.environ.get('TEMP', '')
+
+    if temp_dir and os.path.exists(temp_dir):
+        try:
+            for entry in os.listdir(temp_dir):
+                if entry.lower().endswith('.log'):
+                    full_path = os.path.join(temp_dir, entry)
+                    if os.path.isfile(full_path):
+                        try:
+                            size_bytes = os.path.getsize(full_path)
+                            found.append({
+                                "name": entry,
+                                "path": full_path,
+                                "size_kb": round(size_bytes / 1024, 1),
+                                "type": "TEXT"
+                            })
+                        except (OSError, PermissionError):
+                            continue
+        except (OSError, PermissionError):
+            pass
+
+    return found
+

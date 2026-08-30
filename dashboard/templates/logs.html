@@ -18,12 +18,20 @@
     <div class="card" style="margin-bottom: 24px; padding: 20px;">
         
         <!-- Tabs Header -->
-        <div style="display: flex; gap: 8px; border-bottom: 1px solid #1e1e1e; padding-bottom: 14px; margin-bottom: 18px;">
+        <div style="display: flex; gap: 8px; border-bottom: 1px solid #1e1e1e; padding-bottom: 14px; margin-bottom: 18px; flex-wrap: wrap;">
             <button type="button" id="tabUploadBtn" class="btn-primary" style="font-size: 13px; padding: 7px 16px;" onclick="switchTab('upload')">
                 Upload File
             </button>
             <button type="button" id="tabPasteBtn" class="btn-secondary" style="font-size: 13px; padding: 7px 16px;" onclick="switchTab('paste')">
                 Paste Text
+            </button>
+            <button type="button" id="tabLocalBtn" class="btn-secondary" style="font-size: 13px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px;" onclick="switchTab('local')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                </svg>
+                Local System Logs
             </button>
         </div>
 
@@ -53,8 +61,23 @@
                 <textarea id="logTextarea" name="logtext" rows="20" placeholder="Paste your log content here..." style="width: 100%; background: #0c0c0c; border: 1px solid #1e1e1e; border-radius: 8px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 14px; resize: vertical; line-height: 1.5; outline: none;"></textarea>
             </div>
 
-            <!-- Analyze Button -->
-            <div style="margin-top: 18px;">
+            <!-- Tab 3: Local System Logs -->
+            <div id="tabLocalContent" style="display: none;">
+                <div style="margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-size: 13px; color: #888;">
+                        Discovered logs in standard Windows locations (Event Logs & Temp):
+                    </div>
+                    <button type="button" class="btn-secondary" style="font-size: 11px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="fetchLocalLogs()">
+                        Refresh
+                    </button>
+                </div>
+                <div id="localLogsContainer" style="display: flex; flex-direction: column; gap: 10px; min-height: 100px;">
+                    <div style="color: #666; font-size: 13px; text-align: center; padding: 24px;">Scanning local system for logs...</div>
+                </div>
+            </div>
+
+            <!-- Analyze Button (shown for upload & paste) -->
+            <div id="analyzeSubmitContainer" style="margin-top: 18px;">
                 <button type="submit" id="analyzeSubmitBtn" style="width: 100%; background: #ffffff; color: #000000; font-weight: 600; font-size: 14px; padding: 12px; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s ease;">
                     Analyze Log
                 </button>
@@ -110,24 +133,141 @@
 {% block scripts %}
 <script>
     let activeTab = 'upload';
+    let localLogsLoaded = false;
 
     function switchTab(tab) {
         activeTab = tab;
         const uploadBtn = document.getElementById('tabUploadBtn');
         const pasteBtn = document.getElementById('tabPasteBtn');
+        const localBtn = document.getElementById('tabLocalBtn');
         const uploadContent = document.getElementById('tabUploadContent');
         const pasteContent = document.getElementById('tabPasteContent');
+        const localContent = document.getElementById('tabLocalContent');
+        const submitContainer = document.getElementById('analyzeSubmitContainer');
+
+        uploadBtn.className = 'btn-secondary';
+        pasteBtn.className = 'btn-secondary';
+        if (localBtn) localBtn.className = 'btn-secondary';
+
+        uploadContent.style.display = 'none';
+        pasteContent.style.display = 'none';
+        if (localContent) localContent.style.display = 'none';
 
         if (tab === 'upload') {
             uploadBtn.className = 'btn-primary';
-            pasteBtn.className = 'btn-secondary';
             uploadContent.style.display = 'block';
-            pasteContent.style.display = 'none';
-        } else {
-            uploadBtn.className = 'btn-secondary';
+            if (submitContainer) submitContainer.style.display = 'block';
+        } else if (tab === 'paste') {
             pasteBtn.className = 'btn-primary';
-            uploadContent.style.display = 'none';
             pasteContent.style.display = 'block';
+            if (submitContainer) submitContainer.style.display = 'block';
+        } else if (tab === 'local') {
+            if (localBtn) localBtn.className = 'btn-primary';
+            if (localContent) localContent.style.display = 'block';
+            if (submitContainer) submitContainer.style.display = 'none';
+            if (!localLogsLoaded) {
+                fetchLocalLogs();
+            }
+        }
+    }
+
+    async function fetchLocalLogs() {
+        const container = document.getElementById('localLogsContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="color: #666; font-size: 13px; text-align: center; padding: 24px;">Scanning local system for logs...</div>';
+
+        try {
+            const res = await fetch('/api/local-logs');
+            if (!res.ok) {
+                container.innerHTML = '<div style="color: #f87171; font-size: 13px; text-align: center; padding: 16px;">Failed to fetch local log files.</div>';
+                return;
+            }
+            const logs = await res.json();
+            localLogsLoaded = true;
+
+            if (!logs || logs.length === 0) {
+                container.innerHTML = '<div style="color: #777; font-size: 13px; text-align: center; padding: 28px; background: #0c0c0c; border: 1px dashed #222; border-radius: 8px;">No accessible log files found on this machine</div>';
+                return;
+            }
+
+            let html = '';
+            logs.forEach((log) => {
+                const escapedPath = JSON.stringify(log.path);
+                const badgeColor = log.type === 'EVTX' ? 'badge-high' : 'badge-port';
+                html += `
+                    <div style="background: #0e0e0e; border: 1px solid #1c1c1c; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; transition: border 0.15s ease;">
+                        <div style="flex: 1; min-width: 220px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <span style="font-weight: 600; color: #fff; font-size: 14px; font-family: 'JetBrains Mono', monospace;">${log.name}</span>
+                                <span class="badge ${badgeColor}" style="font-size: 10px; padding: 2px 6px;">${log.type}</span>
+                            </div>
+                            <div style="font-size: 11px; color: #555; font-family: 'JetBrains Mono', monospace; word-break: break-all;">
+                                ${log.path} &bull; ${log.size_kb} KB
+                            </div>
+                        </div>
+                        <div>
+                            <button type="button" class="btn-primary" style="font-size: 12px; padding: 6px 14px; font-weight: 600;" onclick='analyzeLocalFile(${escapedPath}, this)'>
+                                Analyze
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+        } catch (e) {
+            container.innerHTML = '<div style="color: #f87171; font-size: 13px; text-align: center; padding: 16px;">Error connecting to local log discovery service.</div>';
+        }
+    }
+
+    async function analyzeLocalFile(path, btnEl) {
+        if (!path) return;
+
+        // Show progress spinner
+        document.getElementById('logResultsSection').style.display = 'none';
+        const progressEl = document.getElementById('logScanProgress');
+        const labelEl = document.getElementById('logScanLabel');
+        if (labelEl) labelEl.textContent = 'AI is reading ' + path.split(/[\\\\/]/).pop() + '...';
+        if (progressEl) progressEl.classList.add('show');
+
+        if (btnEl) {
+            btnEl.disabled = true;
+            btnEl.textContent = 'Analyzing...';
+            btnEl.style.opacity = '0.5';
+        }
+
+        try {
+            const res = await fetch('/api/analyze-local-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: path })
+            });
+
+            if (progressEl) progressEl.classList.remove('show');
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.textContent = 'Analyze';
+                btnEl.style.opacity = '1';
+            }
+
+            if (!res.ok) {
+                const err = await res.json();
+                alert('Analysis failed: ' + (err.error || 'Server error'));
+                return;
+            }
+
+            const data = await res.json();
+            renderLogAnalysisResults(data);
+
+        } catch (err) {
+            if (progressEl) progressEl.classList.remove('show');
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.textContent = 'Analyze';
+                btnEl.style.opacity = '1';
+            }
+            alert('Network connection error.');
         }
     }
 

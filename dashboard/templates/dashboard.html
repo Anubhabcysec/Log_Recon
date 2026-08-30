@@ -215,5 +215,223 @@
         </div>
     </div>
 
+    <!-- 5. SCHEDULED SCANS SECTION -->
+    <div style="background: #0d1117; border: 1px solid #1e2a3a; border-radius: 12px; padding: 24px 28px; margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <div>
+                <span style="font-size: 16px; font-weight: 600; color: #ffffff;">Scheduled Scans</span>
+                <p style="font-size: 13px; color: #8b949e; margin-top: 4px; margin-bottom: 0;">Automate periodic threat analysis with real-time Telegram alerting</p>
+            </div>
+            <button type="button" class="btn-secondary" style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="loadScheduledScans()">
+                Refresh
+            </button>
+        </div>
+
+        <!-- Schedule Form -->
+        <form id="scheduleForm" onsubmit="handleScheduleSubmit(event)" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; background: #161b22; padding: 14px; border-radius: 8px; border: 1px solid #21262d;">
+            <input type="text" id="schedTargetIP" class="input-field" placeholder="Enter target IP (e.g. 1.1.1.1)..." style="flex: 2; min-width: 180px; padding: 8px 12px; font-size: 13px;" required />
+            <select id="schedInterval" class="input-field" style="flex: 1; min-width: 130px; padding: 8px 12px; font-size: 13px; cursor: pointer;">
+                <option value="1">Every 1 Hour</option>
+                <option value="6">Every 6 Hours</option>
+                <option value="12">Every 12 Hours</option>
+                <option value="24" selected>Every 24 Hours</option>
+            </select>
+            <button type="submit" id="schedSubmitBtn" class="btn-primary" style="padding: 8px 16px; font-size: 13px; white-space: nowrap;">
+                Schedule Scan
+            </button>
+        </form>
+
+        <!-- Scheduled Scans Table -->
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                <thead>
+                    <tr style="border-bottom: 1px solid #1e2a3a; color: #555; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;">
+                        <th style="padding: 10px 12px;">Target IP</th>
+                        <th style="padding: 10px 12px;">Interval</th>
+                        <th style="padding: 10px 12px;">Last Run</th>
+                        <th style="padding: 10px 12px;">Next Run</th>
+                        <th style="padding: 10px 12px; text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduledScansTableBody">
+                    <tr>
+                        <td colspan="5" style="padding: 24px; text-align: center; color: #555; font-size: 13px;">
+                            Loading scheduled scans...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 6. SETTINGS CARD -->
+    <div style="background: #0d1117; border: 1px solid #1e2a3a; border-radius: 12px; padding: 24px 28px; margin-bottom: 32px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <span style="font-size: 16px; font-weight: 600; color: #ffffff;">Alert Settings</span>
+            <span id="savedIndicator" style="font-size: 11px; color: #3fb950; font-family: 'JetBrains Mono', monospace; display: none;">Saved</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+            <div>
+                <div style="font-size: 14px; font-weight: 500; color: #e6edf3;">Alert Severity Threshold</div>
+                <div style="font-size: 12px; color: #8b949e; margin-top: 2px;">
+                    Trigger Telegram notification only when risk level meets or exceeds this severity.
+                </div>
+            </div>
+            <div>
+                <select id="severityThresholdSelect" class="input-field" style="width: 140px; padding: 8px 12px; font-size: 13px; cursor: pointer;" onchange="handleThresholdChange(this.value)">
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
+                    <option value="CRITICAL">CRITICAL</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // 1. Severity Threshold Persistence
+    function initThresholdSetting() {
+        const saved = localStorage.getItem('ALERT_SEVERITY_THRESHOLD') || 'HIGH';
+        const selectEl = document.getElementById('severityThresholdSelect');
+        if (selectEl) {
+            selectEl.value = saved;
+        }
+    }
+
+    function handleThresholdChange(val) {
+        localStorage.setItem('ALERT_SEVERITY_THRESHOLD', val);
+        const indicator = document.getElementById('savedIndicator');
+        if (indicator) {
+            indicator.style.display = 'inline';
+            setTimeout(() => {
+                indicator.style.display = 'none';
+            }, 2000);
+        }
+    }
+
+    // 2. Load Scheduled Scans
+    async function loadScheduledScans() {
+        const tbody = document.getElementById('scheduledScansTableBody');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch('/api/scheduler/list');
+            if (!res.ok) throw new Error('Failed to fetch schedule list');
+            const list = await res.json();
+
+            if (!list || list.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="padding: 24px; text-align: center; color: #555; font-size: 13px;">
+                            No active scheduled scans. Add one above to automate recurring analysis.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            let rows = '';
+            list.forEach(item => {
+                const lastRunFormatted = item.last_run ? item.last_run.replace('T', ' ').substring(0, 19) : 'Pending';
+                const nextRunFormatted = item.next_run ? item.next_run.replace('T', ' ').substring(0, 19) : 'Pending';
+                rows += `
+                    <tr style="border-bottom: 1px solid #151b24;">
+                        <td style="padding: 12px;">
+                            <a href="/report/${encodeURIComponent(item.target_ip)}" style="color: #58a6ff; text-decoration: none; font-weight: 500;">
+                                ${item.target_ip}
+                            </a>
+                        </td>
+                        <td style="padding: 12px; color: #8b949e;">Every ${item.interval_hours}h</td>
+                        <td style="padding: 12px; color: #8b949e; font-size: 12px;">${lastRunFormatted}</td>
+                        <td style="padding: 12px; color: #8b949e; font-size: 12px;">${nextRunFormatted}</td>
+                        <td style="padding: 12px; text-align: right;">
+                            <button type="button" class="btn-secondary" style="font-size: 11px; padding: 3px 8px; color: #f85149; border-color: #3d1515;" onclick="deleteScheduledScan(${item.id})">
+                                Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = rows;
+
+        } catch (e) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="padding: 16px; text-align: center; color: #f85149; font-size: 13px;">
+                        Error loading scheduled scans.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+
+    // 3. Add Scheduled Scan
+    async function handleScheduleSubmit(e) {
+        e.preventDefault();
+        const ipInput = document.getElementById('schedTargetIP');
+        const intervalSelect = document.getElementById('schedInterval');
+        const submitBtn = document.getElementById('schedSubmitBtn');
+
+        const ip = ipInput.value.trim();
+        const interval = parseInt(intervalSelect.value, 10) || 24;
+
+        if (!ip) return;
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Scheduling...';
+
+        try {
+            const res = await fetch('/api/scheduler/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target_ip: ip, interval_hours: interval })
+            });
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Schedule Scan';
+
+            if (!res.ok) {
+                const err = await res.json();
+                alert('Failed to schedule scan: ' + (err.error || 'Unknown error'));
+                return;
+            }
+
+            ipInput.value = '';
+            loadScheduledScans();
+
+        } catch (err) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Schedule Scan';
+            alert('Connection error while scheduling scan.');
+        }
+    }
+
+    // 4. Delete Scheduled Scan
+    async function deleteScheduledScan(id) {
+        if (!confirm('Are you sure you want to remove this scheduled scan?')) return;
+
+        try {
+            const res = await fetch('/api/scheduler/remove/' + id, {
+                method: 'DELETE'
+            });
+            if (!res.ok) {
+                const err = await res.json();
+                alert('Could not remove scan: ' + (err.error || 'Server error'));
+                return;
+            }
+            loadScheduledScans();
+        } catch (e) {
+            alert('Failed to delete scheduled scan.');
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        initThresholdSetting();
+        loadScheduledScans();
+    });
+</script>
 {% endblock %}

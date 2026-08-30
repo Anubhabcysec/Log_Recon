@@ -50,10 +50,24 @@
     </div>
     {% endif %}
 
-    <!-- Scanning Progress -->
-    <div class="scan-progress" id="scanProgress">
-        <div class="scan-spinner"></div>
-        <div class="scan-label" id="scanLabel">Initializing scan...</div>
+    <!-- Scanning Progress Terminal -->
+    <div id="scanTerminalCard" class="terminal-card" style="display: none; margin-bottom: 20px; background: #000000; border: 1px solid #1a2e22; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 255, 136, 0.05);">
+        <div style="background: #080f0b; border-bottom: 1px solid #14291c; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f56; display: inline-block;"></div>
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e; display: inline-block;"></div>
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #27c93f; display: inline-block;"></div>
+                <span style="margin-left: 8px; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #00ff88; text-transform: uppercase; letter-spacing: 0.08em;">Live Scan Stream</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: #00ff88; animation: pulse 1.5s infinite;"></span>
+                <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #558b6e;">SSE ACTIVE</span>
+            </div>
+        </div>
+        <div id="terminalBody" style="background: #000000; color: #00ff88; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; padding: 18px 20px; max-height: 280px; min-height: 140px; overflow-y: auto; scroll-behavior: smooth;">
+            <div id="terminalLogs"></div>
+            <span class="terminal-cursor" style="display: inline-block; width: 8px; height: 15px; background: #00ff88; vertical-align: middle; animation: blink 1s step-end infinite; margin-left: 2px;"></span>
+        </div>
     </div>
 
     <!-- Results -->
@@ -172,12 +186,8 @@
 
     async function scanLocalIP() {
         try {
-            // Show scanning indicator immediately
+            // Hide results
             document.getElementById('results').style.display = 'none';
-            const progress = document.getElementById('scanProgress');
-            if (progress) progress.classList.add('show');
-            const labelEl = document.getElementById('scanLabel');
-            if (labelEl) labelEl.textContent = 'Detecting local IP and scanning your system...';
 
             const res = await fetch('/api/local_ip');
             const data = await res.json();
@@ -197,29 +207,83 @@
         }
     }
 
+    function getTimestamp() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        return `[${hh}:${mm}:${ss}]`;
+    }
+
+    function appendTerminalLog(message) {
+        const logsContainer = document.getElementById('terminalLogs');
+        const terminalBody = document.getElementById('terminalBody');
+        if (!logsContainer || !terminalBody) return;
+
+        const line = document.createElement('div');
+        line.style.marginBottom = '4px';
+        line.style.wordBreak = 'break-word';
+
+        const timeSpan = document.createElement('span');
+        timeSpan.style.color = '#558b6e';
+        timeSpan.style.marginRight = '8px';
+        timeSpan.textContent = getTimestamp();
+
+        const msgSpan = document.createElement('span');
+        msgSpan.style.color = '#00ff88';
+        msgSpan.textContent = message;
+
+        line.appendChild(timeSpan);
+        line.appendChild(msgSpan);
+        logsContainer.appendChild(line);
+
+        // Auto-scroll to bottom
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+    }
+
+    let currentEventSource = null;
+
     async function runScan(ip) {
         if (!ip || ip.trim() === '') {
             alert('Please enter an IP address');
             return;
         }
 
-        // Show progress, hide results
+        // Hide results and clear previous terminal logs
         document.getElementById('results').style.display = 'none';
-        document.getElementById('scanProgress').classList.add('show');
+        const terminalCard = document.getElementById('scanTerminalCard');
+        const logsContainer = document.getElementById('terminalLogs');
+        if (logsContainer) logsContainer.innerHTML = '';
+        if (terminalCard) terminalCard.style.display = 'block';
 
-        const labels = [
-            'Running Nmap port scan...',
-            'Querying NVD vulnerability database...',
-            'Mapping to MITRE ATT&CK framework...',
-            'Running Groq AI analysis...'
-        ];
-        let i = 0;
-        const labelEl = document.getElementById('scanLabel');
-        const interval = setInterval(() => {
-            if (i < labels.length) {
-                labelEl.textContent = labels[i++];
+        if (currentEventSource) {
+            currentEventSource.close();
+            currentEventSource = null;
+        }
+
+        // Connect to SSE stream
+        const streamUrl = `/api/scan/stream?target_ip=${encodeURIComponent(ip)}`;
+        const eventSource = new EventSource(streamUrl);
+        currentEventSource = eventSource;
+
+        let scanCompleted = false;
+
+        eventSource.onmessage = function(event) {
+            if (event.data) {
+                appendTerminalLog(event.data);
+                if (event.data.includes("Scan complete") || event.data.includes("Invalid target IP")) {
+                    scanCompleted = true;
+                }
             }
-        }, 4000);
+        };
+
+        eventSource.onerror = function(err) {
+            console.error("SSE stream closed or encountered error", err);
+            eventSource.close();
+            if (currentEventSource === eventSource) {
+                currentEventSource = null;
+            }
+        };
 
         try {
             const res = await fetch('/api/scan', {
@@ -228,21 +292,32 @@
                 body: JSON.stringify({ target_ip: ip })
             });
 
-            clearInterval(interval);
-            document.getElementById('scanProgress').classList.remove('show');
+            if (currentEventSource) {
+                currentEventSource.close();
+                currentEventSource = null;
+            }
 
             if (!res.ok) {
                 const err = await res.json();
+                if (terminalCard) terminalCard.style.display = 'none';
                 alert('Scan error: ' + (err.error || 'Unknown error'));
                 return;
             }
 
             const data = await res.json();
-            renderResults(data, ip);
+
+            // Brief pause before showing results so user sees Scan complete message
+            setTimeout(() => {
+                if (terminalCard) terminalCard.style.display = 'none';
+                renderResults(data, ip);
+            }, 500);
 
         } catch (e) {
-            clearInterval(interval);
-            document.getElementById('scanProgress').classList.remove('show');
+            if (currentEventSource) {
+                currentEventSource.close();
+                currentEventSource = null;
+            }
+            if (terminalCard) terminalCard.style.display = 'none';
             alert('Connection error. Make sure the server is running.');
         }
     }

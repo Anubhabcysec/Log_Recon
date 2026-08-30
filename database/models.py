@@ -53,6 +53,30 @@ class SearchHistory(Base):
         }
 
 
+class ScheduledScan(Base):
+    """Model storing scheduled recurring scans."""
+    __tablename__ = 'scheduled_scans'
+
+    id = Column(Integer, primary_key=True)
+    target_ip = Column(String(45), nullable=False, index=True)
+    interval_hours = Column(Integer, default=24, nullable=False)
+    last_run = Column(DateTime, nullable=True)
+    next_run = Column(DateTime, nullable=True)
+    active = Column(Integer, default=1, nullable=False)  # 1 for active, 0 for inactive
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "target_ip": self.target_ip,
+            "interval_hours": self.interval_hours,
+            "last_run": self.last_run.isoformat() if self.last_run else None,
+            "next_run": self.next_run.isoformat() if self.next_run else None,
+            "active": bool(self.active),
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
 def create_tables(db_path=None):
     """Creates database tables in database/database.db using create_engine directly."""
     if db_path is None:
