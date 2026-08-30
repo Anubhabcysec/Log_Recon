@@ -4,12 +4,8 @@ flask-sqlalchemy
 python-dotenv
 requests
 shodan
-nmap
 python-nmap
 groq
 reportlab
-flask-sse
-redis
-python-evtx
 chardet
 gunicorn
