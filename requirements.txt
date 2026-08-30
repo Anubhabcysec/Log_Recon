@@ -4,7 +4,6 @@ flask-sqlalchemy
 python-dotenv
 requests
 shodan
-python-nmap
 groq
 reportlab
 chardet
