@@ -136,7 +136,7 @@ def analyze_with_ai(scan_results: dict, cve_results, mitre_mappings: list) -> st
     user_prompt = _build_prompt(scan_results, cve_results, mitre_mappings)
 
     try:
-        client = Groq(api_key=api_key)
+        client = Groq(api_key=api_key, http_client=None)
         chat_completion = client.chat.completions.create(
             model=_MODEL,
             messages=[

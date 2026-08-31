@@ -143,6 +143,20 @@ def api_analyze(ip):
     # Call analyze_ip from detection.risk_engine
     result = analyze_ip(ip)
 
+    # Ensure ai_analysis is populated via analyze_with_ai if not already present
+    if not result.get("ai_analysis"):
+        try:
+            scan_data = {
+                "target_ip": ip,
+                "scan_time": "",
+                "open_ports": [{"port": p, "protocol": "tcp", "service_name": "", "service_version": ""} for p in result.get("open_ports", [])]
+            }
+            cve_data = {"findings": [{"cve_id": v, "severity": "UNKNOWN", "cvss_score": 0.0, "description": ""} for v in result.get("vulnerabilities", [])]} if result.get("vulnerabilities") else {}
+            mitre_data = []
+            result["ai_analysis"] = analyze_with_ai(scan_data, cve_data, mitre_data)
+        except Exception as ai_err:
+            result["ai_analysis"] = f"[AI Analysis Unavailable]\n\nError: {ai_err}"
+
     # Send Telegram alert if risk meets configured threshold
     try:
         send_telegram_alert(result)
@@ -151,7 +165,8 @@ def api_analyze(ip):
 
     return jsonify({
         "status": "success",
-        "data": result
+        "data": result,
+        "ai_analysis": result.get("ai_analysis", "")
     })
 
 
@@ -480,6 +495,7 @@ def api_scan():
 
         # 1. Scan target using parser.nmap_scanner.scan_target
         scan_results = scan_target(target_ip)
+        scan_error = scan_results.get("error")
         open_ports = scan_results.get("open_ports", [])
         scan_time = scan_results.get("scan_time") or datetime.now(timezone.utc).isoformat()
 
@@ -498,7 +514,7 @@ def api_scan():
                 cves = []
             return label, cves
 
-        if open_ports:
+        if open_ports and not scan_error:
             with ThreadPoolExecutor(max_workers=min(10, len(open_ports))) as executor:
                 cve_pairs = list(executor.map(_fetch_cve, open_ports))
                 for label, cves in cve_pairs:
@@ -512,12 +528,10 @@ def api_scan():
                         })
 
         # 3. Call map_ports_to_mitre() from detection.mitre_mapper
-        mitre_mappings = map_ports_to_mitre(open_ports)
+        mitre_mappings = map_ports_to_mitre(open_ports) if (open_ports and not scan_error) else []
 
-        # 4. Call analyze_with_ai() from detection.ai_analyzer
-        ai_analysis = analyze_with_ai(scan_results, cve_results_map, mitre_mappings)
-
-        # 5. Fetch threat intelligence details (ISP, Org, Country, Domain, Hostnames)
+        # 4. Fetch threat intelligence details (AbuseIPDB and Shodan via analyze_ip)
+        ai_analysis_from_intel = ""
         try:
             intel = analyze_ip(target_ip)
             isp = intel.get("isp", "Unknown")
@@ -525,6 +539,19 @@ def api_scan():
             country = intel.get("country", "N/A")
             domain = intel.get("domain", "")
             hostnames = intel.get("hostnames", [])
+            ai_analysis_from_intel = intel.get("ai_analysis", "")
+            # If nmap was unavailable or had an error, fallback to Shodan ports/vulns if available
+            if scan_error and intel.get("open_ports"):
+                shodan_ports = intel.get("open_ports", [])
+                open_ports = [{"port": p, "protocol": "tcp", "service_name": "", "service_version": ""} for p in shodan_ports]
+            if scan_error and intel.get("vulnerabilities"):
+                for v in intel.get("vulnerabilities", []):
+                    cve_findings.append({
+                        "cve_id": v,
+                        "severity": "UNKNOWN",
+                        "cvss_score": 0.0,
+                        "description": ""
+                    })
         except Exception as intel_err:
             print(f"[api_scan] Threat intel lookup error: {intel_err}")
             isp = "Unknown"
@@ -533,7 +560,20 @@ def api_scan():
             domain = ""
             hostnames = []
 
-        # 6. Calculate risk_level based on CVE severity and number of open ports
+        # 5. Call analyze_with_ai() from detection.ai_analyzer
+        try:
+            if not scan_error:
+                ai_analysis = analyze_with_ai(scan_results, cve_results_map, mitre_mappings)
+            else:
+                ai_analysis = ai_analysis_from_intel or analyze_with_ai(
+                    {"target_ip": target_ip, "scan_time": scan_time, "open_ports": open_ports},
+                    cve_results_map,
+                    mitre_mappings
+                )
+        except Exception as ai_err:
+            ai_analysis = f"[AI Analysis Unavailable]\n\nError: {ai_err}"
+
+        # 6. Calculate risk_level based on CVE severity, open ports, and AbuseIPDB
         severities = {cve.get("severity", "").upper() for cve in cve_findings}
         max_cvss = max([cve.get("cvss_score", 0.0) for cve in cve_findings], default=0.0)
 
@@ -584,7 +624,7 @@ def api_scan():
             print(f"[api_scan] Telegram alert error: {alert_err}")
 
         # 9. Return the combined result as JSON
-        return jsonify({
+        response_payload = {
             "target_ip": target_ip,
             "scan_time": scan_time,
             "risk_level": risk_level,
@@ -597,7 +637,11 @@ def api_scan():
             "cve_findings": cve_findings,
             "mitre_mappings": mitre_mappings,
             "ai_analysis": ai_analysis
-        })
+        }
+        if scan_error:
+            response_payload["scan_error"] = scan_error
+
+        return jsonify(response_payload)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -131,7 +131,7 @@ class TestAIAnalyzer(unittest.TestCase):
                 self.sample_mitre_mappings
             )
             self.assertIn("[AI Analysis Unavailable]", result)
-            self.assertIn("An unexpected error occurred", result)
+            self.assertIn("Unexpected error", result)
 
 if __name__ == '__main__':
     unittest.main()

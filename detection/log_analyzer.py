@@ -93,7 +93,8 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
 
     # 4. Call Groq API
     try:
-        client = Groq(api_key=api_key)
+        print("Attempting AI analysis...")
+        client = Groq(api_key=api_key, http_client=None)
         chat_completion = client.chat.completions.create(
             model=_MODEL,
             messages=[
@@ -103,25 +104,30 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
             temperature=_TEMPERATURE,
             max_tokens=_MAX_TOKENS,
         )
+        print("AI analysis complete")
         return chat_completion.choices[0].message.content
 
-    except RateLimitError:
+    except RateLimitError as e:
+        print(f"AI analysis failed: {e}")
         return (
             "[AI Analysis Unavailable]\n\n"
             "Groq API rate limit exceeded. Please wait a moment and try again."
         )
     except APIConnectionError as exc:
+        print(f"AI analysis failed: {exc}")
         return (
             f"[AI Analysis Unavailable]\n\n"
             f"Could not connect to Groq API: {exc}\n"
             "Please verify your internet connection."
         )
     except APIError as exc:
+        print(f"AI analysis failed: {exc}")
         return (
             f"[AI Analysis Unavailable]\n\n"
             f"Groq API returned an error: {exc.message} (status {exc.status_code})"
         )
     except Exception as exc:
+        print(f"AI analysis failed: {exc}")
         return (
             f"[AI Analysis Unavailable]\n\n"
             f"An unexpected error occurred during AI log analysis: {exc}"

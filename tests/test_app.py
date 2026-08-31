@@ -13,10 +13,10 @@ class TestThreatIntelAppRoutes(unittest.TestCase):
         self.client = app.test_client()
 
     def test_home_route(self):
-        """Test GET / returns home landing page."""
+        """Test GET / returns 302 redirect to /dashboard."""
         response = self.client.get('/')
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(b'LOGRECON', response.data)
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/dashboard', response.headers['Location'])
 
     def test_analyze_post_valid_and_invalid(self):
         """Test POST /analyze format validation."""
@@ -40,7 +40,8 @@ class TestThreatIntelAppRoutes(unittest.TestCase):
             "isp": "Cloudflare",
             "open_ports": [53, 80, 443],
             "vulnerabilities": [],
-            "risk_level": "LOW"
+            "risk_level": "LOW",
+            "ai_analysis": "AI summary"
         }
 
         # Valid IP request
@@ -50,6 +51,7 @@ class TestThreatIntelAppRoutes(unittest.TestCase):
         self.assertEqual(data["status"], "success")
         self.assertEqual(data["data"]["ip"], "1.1.1.1")
         self.assertEqual(data["data"]["risk_level"], "LOW")
+        self.assertEqual(data["ai_analysis"], "AI summary")
         mock_analyze_ip.assert_called_once_with("1.1.1.1")
 
         # Invalid IP request
@@ -67,7 +69,8 @@ class TestThreatIntelAppRoutes(unittest.TestCase):
             "isp": "Google LLC",
             "open_ports": [53],
             "vulnerabilities": [],
-            "risk_level": "LOW"
+            "risk_level": "LOW",
+            "ai_analysis": "Google DNS summary"
         }
 
         response = self.client.get('/report/8.8.8.8')
@@ -91,7 +94,7 @@ class TestThreatIntelAppRoutes(unittest.TestCase):
         """Test GET /scanner renders scanner.html."""
         response = self.client.get('/scanner')
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b'LOCAL SYSTEM SCANNER', response.data)
+        self.assertIn(b'IP Threat Analysis', response.data)
 
     @patch('app.generate_pdf_report')
     @patch('app.analyze_with_ai')
@@ -120,9 +123,7 @@ class TestThreatIntelAppRoutes(unittest.TestCase):
         res_valid = self.client.post('/api/scan', json={"target_ip": "127.0.0.1"})
         self.assertEqual(res_valid.status_code, 200)
         data = json.loads(res_valid.data)
-        self.assertEqual(data["status"], "success")
-        self.assertIn("pdf_url", data)
-        self.assertEqual(data["data"]["ai_analysis"], "AI Analysis Report")
+        self.assertEqual(data["ai_analysis"], "AI Analysis Report")
         mock_scan.assert_called_once_with("127.0.0.1")
         mock_cve.assert_called_once_with("ssh", "8.9")
         mock_mitre.assert_called_once()

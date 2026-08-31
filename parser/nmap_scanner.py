@@ -73,107 +73,76 @@ def scan_target(target_ip: str, arguments: str = "-F -T4") -> dict:
     """
     scan_time = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
 
-    # ------------------------------------------------------------------
-    # Guard: python-nmap not importable
-    # ------------------------------------------------------------------
-    if not NMAP_AVAILABLE:
+    try:
+        import nmap
+    except ImportError:
         return {
             "target_ip": target_ip,
             "scan_time": scan_time,
             "open_ports": [],
-            "error": (
-                "python-nmap is not installed. "
-                "Install it with: pip install python-nmap"
-            ),
+            "error": "Nmap not available on this server. Run LogRecon locally for port scanning.",
         }
 
-    # ------------------------------------------------------------------
-    # Guard: nmap binary not present on the system
-    # ------------------------------------------------------------------
     try:
         nm = nmap.PortScanner()
-    except nmap.PortScannerError:
-        return {
-            "target_ip": target_ip,
-            "scan_time": scan_time,
-            "open_ports": [],
-            "error": (
-                "nmap executable not found. "
-                "Please install nmap from https://nmap.org/download.html "
-                "and ensure it is available on your system PATH."
-            ),
-        }
-
-    # ------------------------------------------------------------------
-    # Run the scan
-    # ------------------------------------------------------------------
-    try:
         nm.scan(hosts=target_ip, arguments=arguments)
-    except nmap.PortScannerError as exc:
+
+        open_ports = []
+        all_hosts = nm.all_hosts()
+        if not all_hosts:
+            return {
+                "target_ip": target_ip,
+                "scan_time": scan_time,
+                "open_ports": [],
+            }
+
+        for host in all_hosts:
+            for protocol in nm[host].all_protocols():
+                port_list = sorted(nm[host][protocol].keys())
+                for port in port_list:
+                    port_info = nm[host][protocol][port]
+                    state = port_info.get("state", "unknown")
+
+                    if "open" not in state:
+                        continue
+
+                    open_ports.append(
+                        {
+                            "port": port,
+                            "protocol": protocol,
+                            "state": state,
+                            "service_name": port_info.get("name", ""),
+                            "service_version": (
+                                " ".join(
+                                    filter(
+                                        None,
+                                        [
+                                            port_info.get("product", ""),
+                                            port_info.get("version", ""),
+                                            port_info.get("extrainfo", ""),
+                                        ],
+                                    )
+                                ).strip()
+                            ),
+                        }
+                    )
+
+        return {
+            "target_ip": target_ip,
+            "scan_time": scan_time,
+            "open_ports": open_ports,
+        }
+
+    except Exception as exc:
+        # Check if error is related to missing nmap binary or port scanner error
+        exc_str = str(exc).lower()
+        if "nmap" in exc_str or isinstance(exc, getattr(nmap, "PortScannerError", Exception)):
+            error_msg = "Nmap not available on this server. Run LogRecon locally for port scanning."
+        else:
+            error_msg = f"Nmap not available on this server. Run LogRecon locally for port scanning. ({exc})"
         return {
             "target_ip": target_ip,
             "scan_time": scan_time,
             "open_ports": [],
-            "error": f"nmap scan failed: {exc}",
+            "error": "Nmap not available on this server. Run LogRecon locally for port scanning.",
         }
-    except Exception as exc:  # noqa: BLE001
-        return {
-            "target_ip": target_ip,
-            "scan_time": scan_time,
-            "open_ports": [],
-            "error": f"Unexpected error during scan: {exc}",
-        }
-
-    # ------------------------------------------------------------------
-    # Parse results
-    # ------------------------------------------------------------------
-    open_ports = []
-
-    all_hosts = nm.all_hosts()
-    if not all_hosts:
-        # Host was unreachable or no results returned
-        return {
-            "target_ip": target_ip,
-            "scan_time": scan_time,
-            "open_ports": [],
-            "error": f"No scan results returned for {target_ip}. "
-                     "The host may be offline or blocking ICMP.",
-        }
-
-    for host in all_hosts:
-        for protocol in nm[host].all_protocols():
-            port_list = sorted(nm[host][protocol].keys())
-            for port in port_list:
-                port_info = nm[host][protocol][port]
-                state = port_info.get("state", "unknown")
-
-                # Only include ports that are open (or open|filtered)
-                if "open" not in state:
-                    continue
-
-                open_ports.append(
-                    {
-                        "port": port,
-                        "protocol": protocol,
-                        "state": state,
-                        "service_name": port_info.get("name", ""),
-                        "service_version": (
-                            " ".join(
-                                filter(
-                                    None,
-                                    [
-                                        port_info.get("product", ""),
-                                        port_info.get("version", ""),
-                                        port_info.get("extrainfo", ""),
-                                    ],
-                                )
-                            ).strip()
-                        ),
-                    }
-                )
-
-    return {
-        "target_ip": target_ip,
-        "scan_time": scan_time,
-        "open_ports": open_ports,
-    }
