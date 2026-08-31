@@ -73,6 +73,28 @@
     <!-- Results -->
     <div id="results" style="display: none;">
 
+        <!-- Private IP / Local scan friendly info banner -->
+        <div id="privateIpBanner" style="display: none; margin-bottom: 16px; background: rgba(31, 111, 235, 0.1); border: 1px solid rgba(56, 139, 253, 0.4); border-radius: 10px; padding: 16px 20px;">
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 260px;">
+                    <span style="font-size: 18px; line-height: 1;">ℹ️</span>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 600; color: #58a6ff; margin-bottom: 4px;">Local Scanning Information</div>
+                        <div style="font-size: 13px; color: #c9d1d9; line-height: 1.5;">
+                            Local scanning is only available when running LogRecon on your own machine. For the live demo, try scanning a public IP like 8.8.8.8 (Google DNS) or 1.1.1.1 (Cloudflare) using the IP Threat Analysis feature.
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; align-self: center;">
+                    <a href="/scan/ip" style="text-decoration: none;">
+                        <button type="button" class="btn-primary" style="font-size: 13px; padding: 8px 16px; background: #238636; color: #ffffff; border: 1px solid rgba(240, 246, 252, 0.1); white-space: nowrap;">
+                            Go to IP Threat Analysis →
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <!-- Summary Bar -->
         <div id="summaryBar" style="margin-bottom: 16px;"></div>
 
@@ -332,6 +354,14 @@
 
     function renderResults(data, ip) {
         document.getElementById('results').style.display = 'block';
+
+        // Check if scan returned 0 open ports AND target IP starts with private IP range
+        const ports = data.open_ports || [];
+        const isPrivateIp = typeof ip === 'string' && (ip.startsWith('10.') || ip.startsWith('172.') || ip.startsWith('192.168.'));
+        const bannerEl = document.getElementById('privateIpBanner');
+        if (bannerEl) {
+            bannerEl.style.display = (ports.length === 0 && isPrivateIp) ? 'block' : 'none';
+        }
 
         // Summary bar
         const risk = data.risk_level || 'LOW';

@@ -133,6 +133,26 @@ def analyze_ip(ip, db_session=None):
         if close_session_on_finish:
             session.close()
 
+    # 4b. Groq AI Threat Analysis
+    ai_analysis = ""
+    print("Attempting AI analysis...")
+    try:
+        from detection.ai_analyzer import analyze_with_ai
+        scan_data_for_ai = {
+            "target_ip": ip,
+            "scan_time": "",
+            "open_ports": [{"port": p, "protocol": "tcp", "service_name": "", "service_version": ""} for p in open_ports] if open_ports else []
+        }
+        cve_data_for_ai = {"findings": [{"cve_id": v, "severity": "UNKNOWN", "cvss_score": 0.0, "description": ""} for v in vulnerabilities]} if vulnerabilities else {}
+        mitre_data_for_ai = []
+        ai_analysis = analyze_with_ai(scan_data_for_ai, cve_data_for_ai, mitre_data_for_ai)
+        print("AI analysis complete")
+    except Exception as ai_err:
+        import traceback
+        print(f"AI analysis failed: {ai_err}")
+        traceback.print_exc()
+        ai_analysis = f"[AI Analysis Unavailable]\n\nError: {ai_err}"
+
     # 5. Return formatted dictionary
     return {
         "ip": ip,
@@ -147,5 +167,6 @@ def analyze_ip(ip, db_session=None):
         "note": note,
         "open_ports": open_ports,
         "vulnerabilities": vulnerabilities,
-        "risk_level": risk_level
+        "risk_level": risk_level,
+        "ai_analysis": ai_analysis
     }
