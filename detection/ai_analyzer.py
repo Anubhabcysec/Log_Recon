@@ -127,16 +127,17 @@ def analyze_with_ai(scan_results: dict, cve_results, mitre_mappings: list) -> st
             "Add it to your .env file: GROQ_API_KEY=your_key_here\n"
             "Get a free key at https://console.groq.com"
         )
-
-    try:
+    try:    
+        import httpx
         from groq import Groq, APIError, APIConnectionError, RateLimitError
     except ImportError:
         return "[AI Analysis Unavailable]\n\nRun: pip install groq"
 
     user_prompt = _build_prompt(scan_results, cve_results, mitre_mappings)
-
     try:
-        client = Groq(api_key=api_key, http_client=None)
+        http_client = httpx.Client()
+        client = Groq(api_key=api_key, http_client=http_client)
+        
         chat_completion = client.chat.completions.create(
             model=_MODEL,
             messages=[
