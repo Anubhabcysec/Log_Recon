@@ -8,6 +8,7 @@ plain-English summaries for non-experts and defenders.
 
 import os
 from config import Config
+import httpx
 
 _MODEL = "groq/compound-mini"
 _MAX_TOKENS = 2048
@@ -94,7 +95,8 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
     # 4. Call Groq API
     try:
         print("Attempting AI analysis...")
-        client = Groq(api_key=api_key, http_client=None)
+        http_client = httpx.Client(timeout=30.0)
+        client = Groq(api_key=api_key, http_client=http_client)
         chat_completion = client.chat.completions.create(
             model=_MODEL,
             messages=[
