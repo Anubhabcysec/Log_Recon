@@ -55,8 +55,10 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
     Returns:
         A formatted string with the AI analysis or an informative fallback message on error.
     """
+
     # 1. Load GROQ_API_KEY from environment / Config
     api_key = os.environ.get("GROQ_API_KEY") or getattr(Config, "GROQ_API_KEY", "")
+
     if not api_key:
         return (
             "[AI Analysis Unavailable]\n\n"
@@ -74,10 +76,24 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
         )
 
     # 3. Format inputs for prompt
-    log_type = parsed_log.get("log_type", "unknown") if isinstance(parsed_log, dict) else "unknown"
-    total_lines = parsed_log.get("total_lines", 0) if isinstance(parsed_log, dict) else 0
-    
-    suspicious_list = parsed_log.get("suspicious_lines", []) if isinstance(parsed_log, dict) else []
+    log_type = (
+        parsed_log.get("log_type", "unknown")
+        if isinstance(parsed_log, dict)
+        else "unknown"
+    )
+
+    total_lines = (
+        parsed_log.get("total_lines", 0)
+        if isinstance(parsed_log, dict)
+        else 0
+    )
+
+    suspicious_list = (
+        parsed_log.get("suspicious_lines", [])
+        if isinstance(parsed_log, dict)
+        else []
+    )
+
     if isinstance(suspicious_list, list) and suspicious_list:
         suspicious_lines_str = "\n".join(suspicious_list[:25])
     else:
@@ -89,14 +105,26 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
         log_type=log_type,
         total_lines=total_lines,
         raw_sample=sample_str,
-        suspicious_lines=suspicious_lines_str
+        suspicious_lines=suspicious_lines_str,
     )
 
-    # 4. Call Groq API
+    # 4. Create HTTP client with retry support
+    transport = httpx.HTTPTransport(retries=1)
+    http_client = httpx.Client(
+        timeout=30.0,
+        transport=transport,
+    )
+
+    # 5. Create Groq client using the custom HTTP client
+    client = Groq(
+        api_key=api_key,
+        http_client=http_client,
+    )
+
+    # 6. Call Groq API
     try:
         print("Attempting AI analysis...")
-        http_client = httpx.Client(timeout=30.0)
-        client = Groq(api_key=api_key, http_client=http_client)
+
         chat_completion = client.chat.completions.create(
             model=_MODEL,
             messages=[
@@ -106,7 +134,9 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
             temperature=_TEMPERATURE,
             max_tokens=_MAX_TOKENS,
         )
+
         print("AI analysis complete")
+
         return chat_completion.choices[0].message.content
 
     except RateLimitError as e:
@@ -115,6 +145,7 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
             "[AI Analysis Unavailable]\n\n"
             "Groq API rate limit exceeded. Please wait a moment and try again."
         )
+
     except APIConnectionError as exc:
         print(f"AI analysis failed: {exc}")
         return (
@@ -122,15 +153,22 @@ def analyze_log_with_ai(parsed_log: dict, raw_sample: str) -> str:
             f"Could not connect to Groq API: {exc}\n"
             "Please verify your internet connection."
         )
+
     except APIError as exc:
         print(f"AI analysis failed: {exc}")
         return (
-            f"[AI Analysis Unavailable]\n\n"
-            f"Groq API returned an error: {exc.message} (status {exc.status_code})"
+            "[AI Analysis Unavailable]\n\n"
+            f"Groq API returned an error: {exc.message} "
+            f"(status {exc.status_code})"
         )
+
     except Exception as exc:
         print(f"AI analysis failed: {exc}")
         return (
-            f"[AI Analysis Unavailable]\n\n"
+            "[AI Analysis Unavailable]\n\n"
             f"An unexpected error occurred during AI log analysis: {exc}"
         )
+
+    finally:
+        # Close the custom HTTP client after the request completes
+        http_client.close()
