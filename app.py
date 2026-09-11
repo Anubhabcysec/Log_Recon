@@ -200,16 +200,58 @@ def clear_history():
     return redirect(url_for('history'))
 
 
+def get_client_public_ip():
+    """
+    Detect the visitor's real public IP address from request headers.
+    Checks X-Forwarded-For, X-Real-IP, and request.remote_addr in order.
+    Returns the first valid public IP found, or falls back to remote_addr / local IP.
+    """
+    # 1. Check X-Forwarded-For header (can be comma-separated list of IPs)
+    forwarded_for = request.headers.get('X-Forwarded-For', '')
+    if forwarded_for:
+        for raw_ip in forwarded_for.split(','):
+            ip_str = raw_ip.strip()
+            try:
+                ip_obj = ipaddress.ip_address(ip_str)
+                if not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local):
+                    return ip_str
+            except ValueError:
+                continue
+
+    # 2. Check X-Real-IP header
+    real_ip = request.headers.get('X-Real-IP', '').strip()
+    if real_ip:
+        try:
+            ip_obj = ipaddress.ip_address(real_ip)
+            if not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local):
+                return real_ip
+        except ValueError:
+            pass
+
+    # 3. Check request.remote_addr
+    remote_addr = (request.remote_addr or '').strip()
+    if remote_addr:
+        try:
+            ip_obj = ipaddress.ip_address(remote_addr)
+            if not (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_reserved or ip_obj.is_link_local):
+                return remote_addr
+        except ValueError:
+            pass
+
+    # Fallback to remote_addr if available or host local IP
+    return remote_addr or get_local_ip()
+
+
 @app.route('/api/local-ip')
 def api_local_ip():
-    """Returns local IP address of host system."""
-    return jsonify({"status": "success", "ip": get_local_ip()})
+    """Returns detected client public IP address (or local fallback)."""
+    return jsonify({"status": "success", "ip": get_client_public_ip()})
 
 
 @app.route('/api/local_ip')
 def api_local_ip_underscore():
-    """Returns local IP address of host system as JSON {"ip": "<ip>"}."""
-    return jsonify({"ip": get_local_ip()})
+    """Returns detected client public IP address as JSON {"ip": "<ip>"}."""
+    return jsonify({"ip": get_client_public_ip()})
 
 
 @app.route('/scan')

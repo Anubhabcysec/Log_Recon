@@ -217,10 +217,15 @@
         </div>
 
         <!-- Download -->
-        <div style="margin-top: 8px; margin-bottom: 32px;">
+        <div style="margin-top: 8px; margin-bottom: 24px;">
             <a id="pdfLink" href="#" target="_blank">
                 <button class="btn-secondary" style="width: 100%;">Download PDF Report</button>
             </a>
+        </div>
+
+        <!-- Local Scan Mode Disclaimer Note -->
+        <div id="localScanNote" style="display: none; margin-bottom: 32px; background: #0c0c0c; border: 1px dashed #262626; border-radius: 8px; padding: 14px 18px; text-align: center; font-size: 12px; color: #888; font-family: 'JetBrains Mono', monospace; line-height: 1.5;">
+            💡 Showing public IP threat profile. For local port scanning and log analysis, download and run LogRecon on your machine.
         </div>
 
     </div>
@@ -243,6 +248,7 @@
             // Hide results
             document.getElementById('results').style.display = 'none';
 
+            // 1. Call /api/local_ip to get visitor's public IP
             const res = await fetch('/api/local_ip');
             const data = await res.json();
             const ip = data.ip;
@@ -250,14 +256,73 @@
             if (targetInput) {
                 targetInput.value = ip;
             }
+
+            // 2. Show a message "Detected your public IP: {ip} - Running threat analysis..."
             const infoEl = document.getElementById('localIPInfo');
             if (infoEl) {
                 infoEl.style.display = 'block';
-                infoEl.textContent = 'Target IP: ' + ip;
+                infoEl.innerHTML = `Detected your public IP: <strong style="color: #fff;">${ip}</strong> — Running threat analysis...`;
             }
-            runScan(ip);
+
+            // Show scanning terminal progress
+            const terminalCard = document.getElementById('scanTerminalCard');
+            const logsContainer = document.getElementById('terminalLogs');
+            if (logsContainer) logsContainer.innerHTML = '';
+            if (terminalCard) terminalCard.style.display = 'block';
+
+            appendTerminalLog(`Detected visitor public IP: ${ip}`);
+            appendTerminalLog('Querying AbuseIPDB threat intelligence database...');
+            appendTerminalLog('Querying Shodan reconnaissance & service records...');
+
+            // 3. Call /api/analyze/<ip> instead of /api/scan (which uses Nmap)
+            const analyzeRes = await fetch(`/api/analyze/${encodeURIComponent(ip)}`);
+            if (!analyzeRes.ok) {
+                const err = await analyzeRes.json();
+                if (terminalCard) terminalCard.style.display = 'none';
+                alert('Analysis error: ' + (err.message || err.error || 'Unknown error'));
+                return;
+            }
+
+            const analyzeData = await analyzeRes.json();
+            const threatData = analyzeData.data || analyzeData;
+            threatData.ai_analysis = analyzeData.ai_analysis || threatData.ai_analysis || '';
+
+            appendTerminalLog('Retrieved AbuseIPDB & Shodan threat intelligence profile.');
+            appendTerminalLog('Synthesizing AI threat summary...');
+            appendTerminalLog('Analysis complete.');
+
+            // Map open_ports to standard structure if array of ints/strings from Shodan
+            if (Array.isArray(threatData.open_ports)) {
+                threatData.open_ports = threatData.open_ports.map(p => {
+                    if (typeof p === 'object' && p !== null) return p;
+                    return { port: p, protocol: 'tcp', service_name: 'Identified by Shodan', service_version: '' };
+                });
+            }
+
+            // Map vulnerabilities to cve_findings if needed
+            if (Array.isArray(threatData.vulnerabilities) && (!threatData.cve_findings || threatData.cve_findings.length === 0)) {
+                threatData.cve_findings = threatData.vulnerabilities.map(v => {
+                    if (typeof v === 'object' && v !== null) return v;
+                    return { cve_id: v, severity: 'HIGH', cvss_score: 0.0, description: 'Vulnerability indexed on host via Shodan.' };
+                });
+            }
+
+            // 4. Display results from AbuseIPDB and Shodan
+            setTimeout(() => {
+                if (terminalCard) terminalCard.style.display = 'none';
+                renderResults(threatData, ip);
+
+                // 5. Add a small note below results
+                const localNoteEl = document.getElementById('localScanNote');
+                if (localNoteEl) {
+                    localNoteEl.style.display = 'block';
+                }
+            }, 600);
+
         } catch (e) {
-            alert('Could not detect local IP');
+            const terminalCard = document.getElementById('scanTerminalCard');
+            if (terminalCard) terminalCard.style.display = 'none';
+            alert('Could not complete IP threat analysis. Please try again.');
         }
     }
 
