@@ -65,7 +65,7 @@
             <div id="tabLocalContent" style="display: none;">
                 <div style="margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
                     <div style="font-size: 13px; color: #888;">
-                        Discovered logs in standard Windows locations (Event Logs & Temp):
+                        Discovered logs in standard system locations (Event Logs, /var/log, & Temp):
                     </div>
                     <button type="button" class="btn-secondary" style="font-size: 11px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="fetchLocalLogs()">
                         Refresh
@@ -191,8 +191,37 @@
                 return;
             }
 
+            // Check if special "info" message item returned
+            if (logs.length === 1 && logs[0].type === 'info') {
+                const info = logs[0];
+                container.innerHTML = `
+                    <div style="background: #111111; border: 1px solid #242424; border-radius: 8px; padding: 20px 22px; display: flex; align-items: flex-start; gap: 14px;">
+                        <span style="font-size: 18px; line-height: 1.2;">ℹ️</span>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 600; color: #d1d5db; margin-bottom: 6px;">${info.name}</div>
+                            <div style="font-size: 13px; color: #888; line-height: 1.6;">
+                                ${info.message}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
             let html = '';
             logs.forEach((log) => {
+                if (log.type === 'info') {
+                    html += `
+                        <div style="background: #111111; border: 1px solid #242424; border-radius: 8px; padding: 20px 22px; display: flex; align-items: flex-start; gap: 14px;">
+                            <span style="font-size: 18px; line-height: 1.2;">ℹ️</span>
+                            <div>
+                                <div style="font-size: 14px; font-weight: 600; color: #d1d5db; margin-bottom: 6px;">${log.name}</div>
+                                <div style="font-size: 13px; color: #888; line-height: 1.6;">${log.message}</div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
                 const escapedPath = JSON.stringify(log.path);
                 const badgeColor = log.type === 'EVTX' ? 'badge-high' : 'badge-port';
                 html += `

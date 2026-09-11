@@ -343,5 +343,37 @@ def find_local_logs() -> list:
         except (OSError, PermissionError):
             pass
 
+    # 3. Linux / Unix standard log paths
+    linux_paths = [
+        ("/var/log/syslog", "syslog", "TEXT"),
+        ("/var/log/auth.log", "auth.log", "TEXT"),
+        ("/var/log/kern.log", "kern.log", "TEXT"),
+        ("/var/log/nginx/access.log", "nginx/access.log", "TEXT"),
+        ("/var/log/nginx/error.log", "nginx/error.log", "TEXT"),
+        ("/var/log/apache2/access.log", "apache2/access.log", "TEXT"),
+    ]
+
+    for path, name, log_type in linux_paths:
+        if os.path.exists(path):
+            try:
+                size_bytes = os.path.getsize(path)
+                found.append({
+                    "name": name,
+                    "path": path,
+                    "size_kb": round(size_bytes / 1024, 1),
+                    "type": log_type
+                })
+            except (OSError, PermissionError):
+                pass
+
+    if not found:
+        return [{
+            "name": "No local logs found",
+            "path": None,
+            "size_kb": 0,
+            "type": "info",
+            "message": "Local log scanning works when LogRecon runs on your own machine. Use the Upload File or Paste Text tabs to analyze logs manually."
+        }]
+
     return found
 
