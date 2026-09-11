@@ -8,11 +8,14 @@
         <p style="font-size: 11px; color: #444; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;">
             Automated Incident Response Engine</p>
         {% if mode == 'local' %}
-            <h1 style="font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Local System Scanner</h1>
-            <p style="font-size: 14px; color: #888; margin-top: 6px;">Scanning your local machine for open ports, CVEs and vulnerabilities...</p>
+        <h1 style="font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">Local System Scanner
+        </h1>
+        <p style="font-size: 14px; color: #888; margin-top: 6px;">Scanning your local machine for open ports, CVEs and
+            vulnerabilities...</p>
         {% else %}
-            <h1 style="font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">IP Threat Analysis</h1>
-            <p style="font-size: 14px; color: #888; margin-top: 6px;">Query any public IP for abuse reports, open ports and threat intelligence</p>
+        <h1 style="font-size: 26px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">IP Threat Analysis</h1>
+        <p style="font-size: 14px; color: #888; margin-top: 6px;">Query any public IP for abuse reports, open ports and
+            threat intelligence</p>
         {% endif %}
     </div>
 
@@ -25,17 +28,25 @@
                 style="flex: 1; min-width: 200px;" />
             <button class="btn-primary" onclick="runScan(document.getElementById('targetIP').value)">Analyze</button>
         </div>
-        
+
         <!-- Quick Select Buttons -->
         <div style="margin-top: 14px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
-            <span style="font-size: 11px; color: #555; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">Quick Select:</span>
-            <button type="button" class="btn-secondary" style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="selectAndScan('8.8.8.8')">
+            <span
+                style="font-size: 11px; color: #555; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">Quick
+                Select:</span>
+            <button type="button" class="btn-secondary"
+                style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;"
+                onclick="selectAndScan('8.8.8.8')">
                 8.8.8.8 (Google DNS)
             </button>
-            <button type="button" class="btn-secondary" style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="selectAndScan('1.1.1.1')">
+            <button type="button" class="btn-secondary"
+                style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;"
+                onclick="selectAndScan('1.1.1.1')">
                 1.1.1.1 (Cloudflare)
             </button>
-            <button type="button" class="btn-secondary" style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="selectAndScan('208.67.222.222')">
+            <button type="button" class="btn-secondary"
+                style="font-size: 12px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;"
+                onclick="selectAndScan('208.67.222.222')">
                 208.67.222.222 (OpenDNS)
             </button>
         </div>
@@ -51,22 +62,33 @@
     {% endif %}
 
     <!-- Scanning Progress Terminal -->
-    <div id="scanTerminalCard" class="terminal-card" style="display: none; margin-bottom: 20px; background: #000000; border: 1px solid #1a2e22; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 255, 136, 0.05);">
-        <div style="background: #080f0b; border-bottom: 1px solid #14291c; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;">
+    <div id="scanTerminalCard" class="terminal-card"
+        style="display: none; margin-bottom: 20px; background: #000000; border: 1px solid #1a2e22; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 24px rgba(0, 255, 136, 0.05);">
+        <div
+            style="background: #080f0b; border-bottom: 1px solid #14291c; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 8px;">
-                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f56; display: inline-block;"></div>
-                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e; display: inline-block;"></div>
-                <div style="width: 10px; height: 10px; border-radius: 50%; background: #27c93f; display: inline-block;"></div>
-                <span style="margin-left: 8px; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #00ff88; text-transform: uppercase; letter-spacing: 0.08em;">Live Scan Stream</span>
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ff5f56; display: inline-block;">
+                </div>
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #ffbd2e; display: inline-block;">
+                </div>
+                <div style="width: 10px; height: 10px; border-radius: 50%; background: #27c93f; display: inline-block;">
+                </div>
+                <span
+                    style="margin-left: 8px; font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #00ff88; text-transform: uppercase; letter-spacing: 0.08em;">Live
+                    Scan Stream</span>
             </div>
             <div style="display: flex; align-items: center; gap: 6px;">
-                <span style="width: 6px; height: 6px; border-radius: 50%; background: #00ff88; animation: pulse 1.5s infinite;"></span>
-                <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #558b6e;">SSE ACTIVE</span>
+                <span
+                    style="width: 6px; height: 6px; border-radius: 50%; background: #00ff88; animation: pulse 1.5s infinite;"></span>
+                <span style="font-size: 11px; font-family: 'JetBrains Mono', monospace; color: #558b6e;">SSE
+                    ACTIVE</span>
             </div>
         </div>
-        <div id="terminalBody" style="background: #000000; color: #00ff88; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; padding: 18px 20px; max-height: 280px; min-height: 140px; overflow-y: auto; scroll-behavior: smooth;">
+        <div id="terminalBody"
+            style="background: #000000; color: #00ff88; font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; padding: 18px 20px; max-height: 280px; min-height: 140px; overflow-y: auto; scroll-behavior: smooth;">
             <div id="terminalLogs"></div>
-            <span class="terminal-cursor" style="display: inline-block; width: 8px; height: 15px; background: #00ff88; vertical-align: middle; animation: blink 1s step-end infinite; margin-left: 2px;"></span>
+            <span class="terminal-cursor"
+                style="display: inline-block; width: 8px; height: 15px; background: #00ff88; vertical-align: middle; animation: blink 1s step-end infinite; margin-left: 2px;"></span>
         </div>
     </div>
 
@@ -74,20 +96,26 @@
     <div id="results" style="display: none;">
 
         <!-- Private IP / Local scan friendly info banner -->
-        <div id="privateIpBanner" style="display: none; margin-bottom: 16px; background: rgba(31, 111, 235, 0.1); border: 1px solid rgba(56, 139, 253, 0.4); border-radius: 10px; padding: 16px 20px;">
-            <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+        <div id="privateIpBanner"
+            style="display: none; margin-bottom: 16px; background: rgba(31, 111, 235, 0.1); border: 1px solid rgba(56, 139, 253, 0.4); border-radius: 10px; padding: 16px 20px;">
+            <div
+                style="display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: flex-start; gap: 12px; flex: 1; min-width: 260px;">
                     <span style="font-size: 18px; line-height: 1;">ℹ️</span>
                     <div>
-                        <div style="font-size: 14px; font-weight: 600; color: #58a6ff; margin-bottom: 4px;">Local Scanning Information</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #58a6ff; margin-bottom: 4px;">Local
+                            Scanning Information</div>
                         <div style="font-size: 13px; color: #c9d1d9; line-height: 1.5;">
-                            Local scanning is only available when running LogRecon on your own machine. For the live demo, try scanning a public IP like 8.8.8.8 (Google DNS) or 1.1.1.1 (Cloudflare) using the IP Threat Analysis feature.
+                            Local scanning is only available when running LogRecon on your own machine. For the live
+                            demo, try scanning a public IP like 8.8.8.8 (Google DNS) or 1.1.1.1 (Cloudflare) using the
+                            IP Threat Analysis feature.
                         </div>
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; align-self: center;">
                     <a href="/scan/ip" style="text-decoration: none;">
-                        <button type="button" class="btn-primary" style="font-size: 13px; padding: 8px 16px; background: #238636; color: #ffffff; border: 1px solid rgba(240, 246, 252, 0.1); white-space: nowrap;">
+                        <button type="button" class="btn-primary"
+                            style="font-size: 13px; padding: 8px 16px; background: #238636; color: #ffffff; border: 1px solid rgba(240, 246, 252, 0.1); white-space: nowrap;">
                             Go to IP Threat Analysis →
                         </button>
                     </a>
@@ -147,7 +175,9 @@
 
         <!-- Data Sources -->
         <div class="card" id="dataSourcesCard" style="background:#0c0c0c; border:1px solid #1a1a1a; padding:16px 20px;">
-            <div class="card-title" style="font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#666; margin-bottom:12px;">Data Sources</div>
+            <div class="card-title"
+                style="font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:#666; margin-bottom:12px;">
+                Data Sources</div>
             <table class="data-table" style="width:100%; font-size:12px; font-family:'JetBrains Mono',monospace;">
                 <thead>
                     <tr style="border-bottom:1px solid #1a1a1a; color:#555;">
@@ -159,7 +189,8 @@
                 <tbody style="color:#888;">
                     <tr style="border-bottom:1px solid #141414;">
                         <td style="padding:8px 10px; color:#aaa; font-weight:500;">AbuseIPDB</td>
-                        <td style="padding:8px 10px; color:#777;">Abuse confidence score, total reports, ISP, country</td>
+                        <td style="padding:8px 10px; color:#777;">Abuse confidence score, total reports, ISP, country
+                        </td>
                         <td style="padding:8px 10px; text-align:right; color:#555;" class="query-timestamp">—</td>
                     </tr>
                     <tr style="border-bottom:1px solid #141414;">
@@ -179,7 +210,8 @@
                     </tr>
                 </tbody>
             </table>
-            <div style="margin-top:12px; padding-top:10px; border-top:1px solid #161616; font-size:11px; color:#444; font-family:'JetBrains Mono',monospace;">
+            <div
+                style="margin-top:12px; padding-top:10px; border-top:1px solid #161616; font-size:11px; color:#444; font-family:'JetBrains Mono',monospace;">
                 All data queried live at scan time. No cached or simulated results.
             </div>
         </div>
@@ -290,7 +322,7 @@
 
         let scanCompleted = false;
 
-        eventSource.onmessage = function(event) {
+        eventSource.onmessage = function (event) {
             if (event.data) {
                 appendTerminalLog(event.data);
                 if (event.data.includes("Scan complete") || event.data.includes("Invalid target IP")) {
@@ -299,7 +331,7 @@
             }
         };
 
-        eventSource.onerror = function(err) {
+        eventSource.onerror = function (err) {
             console.error("SSE stream closed or encountered error", err);
             eventSource.close();
             if (currentEventSource === eventSource) {
@@ -420,7 +452,6 @@
     `;
 
         // Stat cards
-        const ports = data.open_ports || [];
         const cves = data.cve_findings || [];
         document.getElementById('statCards').innerHTML = `
         <div class="stat-card"><div class="stat-label">Open Ports</div><div class="stat-value">${ports.length}</div></div>
@@ -514,7 +545,7 @@
 
         // Update data source timestamps with current scan time
         const nowTime = data.scan_time || new Date().toISOString();
-        const formattedTime = (function(t) {
+        const formattedTime = (function (t) {
             try {
                 const d = new Date(t);
                 return isNaN(d.getTime()) ? t : d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -575,26 +606,25 @@
     }
 
     // Auto-trigger local IP scan if mode is 'local' or prefill IP if passed
-    {% if mode == 'local' %}
-    window.onload = function() {
-        scanLocalIP();
-    };
-    {% else %}
-    window.onload = function() {
-        // 1. Check template variable or URL query param or sessionStorage
-        const urlParams = new URLSearchParams(window.location.search);
-        let targetParam = "{{ target_ip | default('') }}" || urlParams.get('ip') || sessionStorage.getItem('target_ip_prefill');
-        
-        if (targetParam && targetParam.trim()) {
-            targetParam = targetParam.trim();
-            sessionStorage.removeItem('target_ip_prefill');
-            const targetInput = document.getElementById('targetIP');
-            if (targetInput) {
-                targetInput.value = targetParam;
+    window.onload = function () {
+        const mode = "{{ mode | default('') }}";
+        if (mode === 'local') {
+            scanLocalIP();
+        } else {
+            // 1. Check template variable or URL query param or sessionStorage
+            const urlParams = new URLSearchParams(window.location.search);
+            let targetParam = "{{ target_ip | default('') }}" || urlParams.get('ip') || sessionStorage.getItem('target_ip_prefill');
+
+            if (targetParam && targetParam.trim()) {
+                targetParam = targetParam.trim();
+                sessionStorage.removeItem('target_ip_prefill');
+                const targetInput = document.getElementById('targetIP');
+                if (targetInput) {
+                    targetInput.value = targetParam;
+                }
+                runScan(targetParam);
             }
-            runScan(targetParam);
         }
     };
-    {% endif %}
 </script>
 {% endblock %}
