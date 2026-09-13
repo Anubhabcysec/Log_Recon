@@ -16,21 +16,32 @@
             box-sizing: border-box;
         }
 
-
         body {
-            background: #050508;
+            background: #060d1e;
             color: #e0e0e0;
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
             display: flex;
             position: relative;
+            overflow-x: hidden;
+        }
+
+        /* GLOBE BACKGROUND */
+        #globe-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
         }
 
         /* SIDEBAR */
         .sidebar {
             width: 240px;
-            background: #111111;
-            border-right: 1px solid #1e1e1e;
+            background: rgba(10, 14, 26, 0.92);
+            border-right: 1px solid #1a2a3a;
             display: flex;
             flex-direction: column;
             padding: 20px 0;
@@ -40,6 +51,7 @@
             top: 0;
             transition: left 0.3s ease;
             z-index: 100;
+            backdrop-filter: blur(12px);
         }
 
         .sidebar.open {
@@ -48,7 +60,7 @@
 
         .sidebar-brand {
             padding: 0 20px 24px 20px;
-            border-bottom: 1px solid #1e1e1e;
+            border-bottom: 1px solid #1a2a3a;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -75,7 +87,7 @@
             gap: 10px;
             padding: 10px 12px;
             border-radius: 8px;
-            color: #888;
+            color: #6688aa;
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
@@ -83,26 +95,26 @@
         }
 
         .sidebar-nav a:hover {
-            background: #1a1a1a;
-            color: #e0e0e0;
+            background: #0d1a2a;
+            color: #00d2ff;
         }
 
         .sidebar-nav a.active {
-            background: #1a1a1a;
-            color: #ffffff;
+            background: #0d1a2a;
+            color: #00d2ff;
         }
 
         .sidebar-nav .nav-icon {
             width: 18px;
             height: 18px;
-            opacity: 0.6;
+            opacity: 0.7;
         }
 
         .sidebar-footer {
             padding: 16px 20px;
-            border-top: 1px solid #1e1e1e;
+            border-top: 1px solid #1a2a3a;
             font-size: 12px;
-            color: #444;
+            color: #334455;
         }
 
         /* OVERLAY */
@@ -110,7 +122,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 99;
         }
 
@@ -125,22 +137,22 @@
             left: 0;
             right: 0;
             height: 56px;
-            background: #0a0a0a;
-            border-bottom: 1px solid #1a1a1a;
+            background: rgba(6, 13, 30, 0.85);
+            border-bottom: 1px solid #0a1a2a;
             display: flex;
             align-items: center;
             padding: 0 20px;
             gap: 16px;
             z-index: 50;
+            backdrop-filter: blur(16px);
         }
 
-        /* ROUND MENU BUTTON */
         .menu-btn {
             width: 36px;
             height: 36px;
             border-radius: 50%;
-            background: #1a1a1a;
-            border: 1px solid #2a2a2a;
+            background: #0d1a2a;
+            border: 1px solid #1a2a3a;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -150,20 +162,22 @@
         }
 
         .menu-btn:hover {
-            background: #222;
+            background: #122030;
         }
 
         .menu-btn svg {
             width: 16px;
             height: 16px;
-            stroke: #888;
+            stroke: #6688aa;
         }
 
         .topbar-title {
             font-size: 14px;
             font-weight: 600;
-            color: #ffffff;
-            letter-spacing: -0.01em;
+            color: #00d2ff;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .topbar-right {
@@ -177,43 +191,35 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            background: #111;
-            border: 1px solid #1e1e1e;
+            background: rgba(0, 20, 40, 0.8);
+            border: 1px solid #0a2a3a;
             border-radius: 20px;
             padding: 4px 12px;
-            font-size: 12px;
-            color: #555;
+            font-size: 11px;
+            color: #6688aa;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .status-dot {
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #22c55e;
-            animation: pulse 2s infinite;
+            background: #00d2ff;
+            box-shadow: 0 0 6px #00d2ff;
+            animation: pulse-glow 2s infinite;
         }
 
-        @keyframes pulse {
+        @keyframes pulse-glow {
 
             0%,
             100% {
                 opacity: 1;
+                box-shadow: 0 0 6px #00d2ff;
             }
 
             50% {
-                opacity: 0.4;
-            }
-        }
-
-        @keyframes blink {
-
-            0%,
-            100% {
-                opacity: 1;
-            }
-
-            50% {
-                opacity: 0;
+                opacity: 0.5;
+                box-shadow: 0 0 2px #00d2ff;
             }
         }
 
@@ -229,26 +235,28 @@
 
         /* CARDS */
         .card {
-            background: #111111;
-            border: 1px solid #1e1e1e;
+            background: rgba(10, 18, 35, 0.85);
+            border: 1px solid #0a1a2a;
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 16px;
+            backdrop-filter: blur(8px);
         }
 
         .card-title {
             font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.08em;
-            color: #555;
+            color: #334466;
             text-transform: uppercase;
             margin-bottom: 16px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         /* BUTTONS */
         .btn-primary {
-            background: #ffffff;
-            color: #000000;
+            background: #00d2ff;
+            color: #000;
             border: none;
             padding: 10px 20px;
             border-radius: 8px;
@@ -257,16 +265,18 @@
             cursor: pointer;
             transition: all 0.15s;
             font-family: 'Inter', sans-serif;
+            box-shadow: 0 0 16px rgba(0, 210, 255, 0.3);
         }
 
         .btn-primary:hover {
-            background: #e0e0e0;
+            background: #00b8e0;
+            box-shadow: 0 0 24px rgba(0, 210, 255, 0.5);
         }
 
         .btn-secondary {
             background: transparent;
-            color: #888;
-            border: 1px solid #2a2a2a;
+            color: #6688aa;
+            border: 1px solid #1a2a3a;
             padding: 10px 20px;
             border-radius: 8px;
             font-size: 14px;
@@ -277,14 +287,15 @@
         }
 
         .btn-secondary:hover {
-            background: #1a1a1a;
-            color: #e0e0e0;
+            background: #0d1a2a;
+            color: #00d2ff;
+            border-color: #00d2ff;
         }
 
         /* INPUT */
         .input-field {
-            background: #0d0d0d;
-            border: 1px solid #1e1e1e;
+            background: rgba(6, 13, 30, 0.9);
+            border: 1px solid #0a1a2a;
             border-radius: 8px;
             padding: 12px 16px;
             font-size: 14px;
@@ -296,11 +307,12 @@
         }
 
         .input-field:focus {
-            border-color: #333;
+            border-color: #00d2ff;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
         }
 
         .input-field::placeholder {
-            color: #333;
+            color: #1a2a3a;
         }
 
         /* TABLE */
@@ -316,19 +328,20 @@
             font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.06em;
-            color: #444;
+            color: #334466;
             text-transform: uppercase;
-            border-bottom: 1px solid #1a1a1a;
+            border-bottom: 1px solid #0a1a2a;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .data-table td {
             padding: 12px 12px;
-            border-bottom: 1px solid #141414;
-            color: #ccc;
+            border-bottom: 1px solid #080f1e;
+            color: #8899aa;
         }
 
         .data-table tr:hover td {
-            background: #111;
+            background: rgba(0, 210, 255, 0.03);
         }
 
         /* BADGES */
@@ -360,36 +373,37 @@
         }
 
         .badge-low {
-            background: #0a2d0a;
-            color: #4ade80;
-            border: 1px solid #103d10;
+            background: #0a1a2a;
+            color: #00d2ff;
+            border: 1px solid #0a2a3a;
         }
 
         .badge-port {
-            background: #111;
-            color: #888;
-            border: 1px solid #222;
+            background: #0a1020;
+            color: #334466;
+            border: 1px solid #0a1a2a;
         }
 
         /* AI ANALYSIS */
         .ai-box {
-            background: #0d0d0d;
-            border-left: 2px solid #2a2a2a;
+            background: rgba(6, 13, 30, 0.9);
+            border-left: 2px solid #00d2ff;
             border-radius: 0 8px 8px 0;
             padding: 20px 24px;
             font-size: 14px;
             line-height: 1.8;
-            color: #aaa;
+            color: #8899aa;
             font-family: 'Inter', sans-serif;
         }
 
         .ai-box h3 {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            color: #666;
+            color: #00d2ff;
             text-transform: uppercase;
-            letter-spacing: 0.06em;
+            letter-spacing: 0.08em;
             margin: 16px 0 6px 0;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .ai-box h3:first-child {
@@ -398,18 +412,18 @@
 
         .ai-box p {
             margin-bottom: 12px;
-            color: #999;
+            color: #7788aa;
         }
 
         .ai-box strong {
-            color: #ddd;
+            color: #c0d8f0;
             font-weight: 600;
         }
 
-        /* SCANNING ANIMATION */
+        /* SCANNING */
         .scan-progress {
-            background: #111;
-            border: 1px solid #1e1e1e;
+            background: rgba(6, 13, 30, 0.9);
+            border: 1px solid #0a1a2a;
             border-radius: 12px;
             padding: 32px;
             text-align: center;
@@ -423,8 +437,8 @@
         .scan-spinner {
             width: 32px;
             height: 32px;
-            border: 2px solid #1e1e1e;
-            border-top-color: #888;
+            border: 2px solid #0a1a2a;
+            border-top-color: #00d2ff;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 16px auto;
@@ -438,7 +452,7 @@
 
         .scan-label {
             font-size: 13px;
-            color: #555;
+            color: #334466;
             font-family: 'JetBrains Mono', monospace;
         }
 
@@ -465,30 +479,31 @@
 
         /* STAT CARD */
         .stat-card {
-            background: #111;
-            border: 1px solid #1e1e1e;
+            background: rgba(10, 18, 35, 0.85);
+            border: 1px solid #0a1a2a;
             border-radius: 10px;
             padding: 16px 20px;
         }
 
         .stat-label {
             font-size: 11px;
-            color: #444;
+            color: #334466;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             margin-bottom: 8px;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .stat-value {
             font-size: 22px;
             font-weight: 700;
-            color: #e0e0e0;
+            color: #00d2ff;
             font-family: 'JetBrains Mono', monospace;
         }
 
         .stat-sub {
             font-size: 12px;
-            color: #444;
+            color: #334466;
             margin-top: 4px;
         }
     </style>
@@ -496,12 +511,9 @@
 
 <body>
 
-    <!-- ══════════════════════════════════════════════════════════════
-         GLOBAL EARTH BACKGROUND — z-index: 0, pointer-events: none
-         Persistent across all routes via base.html shared layout.
-         ══════════════════════════════════════════════════════════════ -->
-    <div id="globe-bg" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;">
-        <div id="threejs-globe" style="width:100%;height:100%;"></div>
+    <!-- 3D Globe Background -->
+    <div id="globe-container">
+        <div id="threejs-container-globe" style="width:100%;height:100%;"></div>
     </div>
 
     <!-- Sidebar Overlay -->
@@ -510,13 +522,13 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00d2ff" stroke-width="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>
             <span>LogRecon</span>
         </div>
         <nav class="sidebar-nav">
-            <a href="/" {% if request.endpoint in ['home', 'index', 'dashboard'] %}class="active"{% endif %}>
+            <a href="/" {% if request.endpoint in ['home','index','dashboard'] %}class="active" {% endif %}>
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="7" height="7" />
                     <rect x="14" y="3" width="7" height="7" />
@@ -525,49 +537,54 @@
                 </svg>
                 Dashboard
             </a>
-            <a href="/scan" {% if request.endpoint in ['scanner', 'scan', 'scan_ip', 'scan_local'] %}class="active"{% endif %}>
+            <a href="/scan/ip" {% if request.endpoint in ['scanner','scan','scan_ip'] %}class="active" {% endif %}>
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="11" cy="11" r="8" />
                     <path d="m21 21-4.35-4.35" />
                 </svg>
                 IP Scanner
             </a>
-            <a href="/logs" {% if request.endpoint in ['logs', 'log_analyzer'] %}class="active"{% endif %}>
+            <a href="/scan/local" {% if request.endpoint in ['scan_local'] %}class="active" {% endif %}>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                </svg>
+                Local Scanner
+            </a>
+            <a href="/logs" {% if request.endpoint in ['logs','log_analyzer'] %}class="active" {% endif %}>
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                     <line x1="16" y1="13" x2="8" y2="13" />
                     <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
                 </svg>
                 Log Analyzer
             </a>
-            <a href="/history" {% if request.endpoint=='history' %}class="active"{% endif %}>
+            <a href="/history" {% if request.endpoint=='history' %}class="active" {% endif %}>
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="10" />
                     <polyline points="12 6 12 12 16 14" />
                 </svg>
                 History
             </a>
-            <a href="/reports" {% if request.endpoint=='reports' %}class="active"{% endif %}>
+            <a href="/reports" {% if request.endpoint=='reports' %}class="active" {% endif %}>
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
                 </svg>
                 Reports
             </a>
-            <a href="/settings" {% if request.endpoint=='settings' %}class="active"{% endif %}>
+            <a href="/settings" {% if request.endpoint=='settings' %}class="active" {% endif %}>
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3" />
-                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
                 </svg>
                 Settings
             </a>
         </nav>
-        <div class="sidebar-footer">LogRecon v1.0 · Educational Use</div>
+        <div class="sidebar-footer">LogRecon v1.0 · Security Intelligence</div>
     </div>
 
     <!-- Top Bar -->
@@ -593,11 +610,7 @@
         {% block content %}{% endblock %}
     </div>
 
-    <!-- ══════════════════════════════════════════════════════════════
-         CORE SCRIPTS: Sidebar + Globe Background
-         ══════════════════════════════════════════════════════════════ -->
     <script>
-        // --- Sidebar Toggle ---
         function toggleSidebar() {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('show');
@@ -606,187 +619,225 @@
             document.getElementById('sidebar').classList.remove('open');
             document.getElementById('overlay').classList.remove('show');
         }
+    </script>
 
-        // --- Global Digital Earth Background (Three.js) ---
-        (function initGlobalEarthBackground() {
-            // WebGL availability check — graceful fallback
-            try {
-                var testCanvas = document.createElement('canvas');
-                var gl = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
-                if (!gl) throw new Error('No WebGL');
-            } catch (e) {
-                // Fallback: subtle radial gradient instead of 3D globe
-                var bg = document.getElementById('globe-bg');
-                if (bg) {
-                    bg.style.background = 'radial-gradient(ellipse at 65% 50%, rgba(0,40,80,0.25) 0%, transparent 70%)';
-                }
-                return;
-            }
+    <!-- 3D Globe with Real Continent Boundaries -->
+    <script>
+        (function () {
+            const container = document.getElementById('threejs-container-globe');
+            if (!container || typeof THREE === 'undefined') return;
 
-            if (typeof THREE === 'undefined') return;
+            const width = container.clientWidth || window.innerWidth;
+            const height = container.clientHeight || window.innerHeight;
 
-            var container = document.getElementById('threejs-globe');
-            if (!container) return;
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.z = 250;
 
-            // Responsive particle/connection counts
-            var isMobile = window.innerWidth < 768;
-            var isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
-            var PARTICLE_COUNT = isMobile ? 600 : (isTablet ? 1200 : 2000);
-            var SURFACE_DOT_COUNT = isMobile ? 400 : (isTablet ? 800 : 1800);
-            var ARC_COUNT = isMobile ? 6 : (isTablet ? 10 : 15);
-            var STAR_COUNT = isMobile ? 200 : 500;
-            var MAP_SIZE = isMobile ? 2048 : 4096;
-            var MAP_HALF = MAP_SIZE / 2;
-            var SPHERE_SEGS = isMobile ? 48 : 64;
-
-            var w = container.clientWidth || window.innerWidth;
-            var h = container.clientHeight || window.innerHeight;
-
-            // Scene
-            var scene = new THREE.Scene();
-
-            // Camera — positioned to place globe center-right
-            var camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 2000);
-            camera.position.set(0, 0, 280);
-
-            // Renderer
-            var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: !isMobile });
-            renderer.setSize(w, h);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2));
-            renderer.setClearColor(0x050508, 1);
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             container.appendChild(renderer.domElement);
 
-            // Globe group — positioned toward center-right
-            var globeGroup = new THREE.Group();
-            var globeOffsetX = isMobile ? 0 : (isTablet ? 25 : 50);
-            globeGroup.position.set(globeOffsetX, -5, 0);
+            const globeGroup = new THREE.Group();
             scene.add(globeGroup);
 
-            var radius = 80;
-
-            // ════════════════════════════════════════════
-            // EARTH TEXTURE — Canvas-drawn continents
-            // ════════════════════════════════════════════
-            var mapCanvas = document.createElement('canvas');
-            mapCanvas.width = MAP_SIZE;
-            mapCanvas.height = MAP_HALF;
-            var ctx = mapCanvas.getContext('2d');
-
-            // Deep dark ocean base
-            ctx.fillStyle = '#040a18';
-            ctx.fillRect(0, 0, MAP_SIZE, MAP_HALF);
-
-            // Subtle grid lines
-            ctx.strokeStyle = 'rgba(0,140,220,0.06)';
-            ctx.lineWidth = 1;
-            for (var lat = 0; lat <= MAP_HALF; lat += MAP_HALF / 18) {
-                ctx.beginPath(); ctx.moveTo(0, lat); ctx.lineTo(MAP_SIZE, lat); ctx.stroke();
-            }
-            for (var lon = 0; lon <= MAP_SIZE; lon += MAP_SIZE / 36) {
-                ctx.beginPath(); ctx.moveTo(lon, 0); ctx.lineTo(lon, MAP_HALF); ctx.stroke();
+            if (width > 900) {
+                globeGroup.position.set(40, -5, 0);
+            } else {
+                globeGroup.position.set(0, 0, 0);
             }
 
-            // Equator & prime meridian slightly brighter
-            ctx.strokeStyle = 'rgba(0,140,220,0.12)';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(0, MAP_HALF / 2); ctx.lineTo(MAP_SIZE, MAP_HALF / 2); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(MAP_SIZE / 2, 0); ctx.lineTo(MAP_SIZE / 2, MAP_HALF); ctx.stroke();
+            const radius = 75;
 
-            // Coordinate helpers
-            function toX(lonDeg) { return ((lonDeg + 180) / 360) * MAP_SIZE; }
-            function toY(latDeg) { return ((90 - latDeg) / 180) * MAP_HALF; }
+            // Draw real continent boundaries on canvas texture
+            const mapCanvas = document.createElement('canvas');
+            mapCanvas.width = 4096;
+            mapCanvas.height = 2048;
+            const mCtx = mapCanvas.getContext('2d');
 
-            function drawPoly(coords, fill, stroke, lw) {
-                if (!coords || !coords.length) return;
-                ctx.beginPath();
-                ctx.moveTo(toX(coords[0][0]), toY(coords[0][1]));
-                for (var i = 1; i < coords.length; i++) {
-                    ctx.lineTo(toX(coords[i][0]), toY(coords[i][1]));
+            // Deep ocean background
+            mCtx.fillStyle = '#060d1e';
+            mCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+            // Lat/Lon grid lines
+            mCtx.strokeStyle = 'rgba(0, 210, 255, 0.12)';
+            mCtx.lineWidth = 2.0;
+            for (let lat = 0; lat <= mapCanvas.height; lat += mapCanvas.height / 18) {
+                mCtx.beginPath(); mCtx.moveTo(0, lat); mCtx.lineTo(mapCanvas.width, lat); mCtx.stroke();
+            }
+            for (let lon = 0; lon <= mapCanvas.width; lon += mapCanvas.width / 36) {
+                mCtx.beginPath(); mCtx.moveTo(lon, 0); mCtx.lineTo(lon, mapCanvas.height); mCtx.stroke();
+            }
+            // Equator & Prime Meridian highlighted
+            mCtx.strokeStyle = 'rgba(0, 210, 255, 0.28)';
+            mCtx.lineWidth = 3.0;
+            mCtx.beginPath(); mCtx.moveTo(0, mapCanvas.height / 2); mCtx.lineTo(mapCanvas.width, mapCanvas.height / 2); mCtx.stroke();
+            mCtx.beginPath(); mCtx.moveTo(mapCanvas.width / 2, 0); mCtx.lineTo(mapCanvas.width / 2, mapCanvas.height); mCtx.stroke();
+
+            function toX(lon) { return ((lon + 180) / 360) * mapCanvas.width; }
+            function toY(lat) { return ((90 - lat) / 180) * mapCanvas.height; }
+
+            function drawPolygon(coords, fillColor, strokeColor, lineWidth) {
+                if (!coords || coords.length === 0) return;
+                mCtx.beginPath();
+                mCtx.moveTo(toX(coords[0][0]), toY(coords[0][1]));
+                for (let i = 1; i < coords.length; i++) {
+                    mCtx.lineTo(toX(coords[i][0]), toY(coords[i][1]));
                 }
-                ctx.closePath();
-                if (fill) { ctx.fillStyle = fill; ctx.fill(); }
-                if (stroke) {
-                    ctx.strokeStyle = stroke;
-                    ctx.lineWidth = lw || 2;
-                    ctx.lineJoin = 'round';
-                    ctx.lineCap = 'round';
-                    ctx.stroke();
+                mCtx.closePath();
+                if (fillColor) { mCtx.fillStyle = fillColor; mCtx.fill(); }
+                if (strokeColor) {
+                    mCtx.strokeStyle = strokeColor;
+                    mCtx.lineWidth = lineWidth || 4;
+                    mCtx.lineJoin = 'round';
+                    mCtx.lineCap = 'round';
+                    mCtx.stroke();
                 }
             }
 
-            // Continent polygon data
-            var continents = {
-                northAmerica: [[-168,66],[-162,71],[-152,71],[-137,69],[-128,70],[-115,69],[-95,74],[-82,82],[-65,83],[-62,76],[-66,63],[-60,56],[-55,52],[-58,47],[-64,45],[-71,42],[-74,38],[-77,34],[-81,25],[-81,30],[-86,30],[-90,29],[-97,26],[-97,20],[-92,16],[-88,16],[-83,9],[-78,8],[-81,8],[-85,12],[-92,14],[-96,16],[-105,20],[-106,23],[-110,24],[-115,30],[-120,34],[-124,40],[-124,48],[-128,51],[-133,56],[-140,59],[-150,60],[-160,58],[-166,60],[-168,66]],
-                greenland: [[-44,60],[-35,65],[-20,70],[-18,76],[-20,81],[-30,83],[-45,83],[-58,82],[-60,78],[-53,72],[-50,64],[-44,60]],
-                southAmerica: [[-77,8],[-72,12],[-64,11],[-60,10],[-52,5],[-50,0],[-38,-4],[-35,-7],[-35,-12],[-39,-17],[-42,-23],[-48,-28],[-53,-33],[-58,-38],[-65,-43],[-67,-55],[-74,-53],[-75,-45],[-72,-38],[-71,-30],[-76,-18],[-80,-5],[-81,-2],[-77,8]],
-                europe: [[-9,36],[-9,43],[-1,44],[0,49],[-4,48],[4,52],[5,54],[8,57],[10,54],[13,55],[18,59],[22,60],[25,65],[28,70],[20,71],[14,68],[10,63],[5,62],[5,59],[9,53],[12,53],[15,54],[20,55],[26,58],[32,60],[40,66],[48,68],[60,68],[57,57],[48,50],[40,48],[37,45],[30,46],[26,41],[23,38],[18,41],[15,38],[12,44],[9,44],[3,43],[-3,37],[-9,36]],
-                africa: [[-6,36],[0,36],[10,37],[11,33],[15,32],[24,32],[32,31],[33,28],[36,22],[43,13],[51,12],[48,8],[45,2],[41,-4],[39,-10],[35,-20],[32,-28],[28,-34],[19,-35],[15,-28],[12,-18],[13,-9],[9,4],[3,6],[-3,5],[-8,4],[-13,8],[-17,14],[-16,21],[-13,28],[-9,30],[-6,36]],
-                asia: [[60,68],[70,73],[80,74],[100,77],[120,77],[140,74],[160,70],[170,66],[180,65],[178,62],[163,60],[158,52],[142,50],[140,46],[130,42],[125,38],[121,32],[118,25],[110,20],[108,14],[105,10],[103,1],[100,7],[98,15],[92,22],[88,22],[82,17],[80,9],[77,8],[73,16],[70,22],[68,24],[62,25],[57,26],[50,30],[45,30],[40,36],[36,36],[37,42],[40,44],[48,44],[52,38],[54,52],[58,56],[60,68]],
-                australia: [[114,-22],[122,-17],[130,-13],[136,-12],[142,-11],[148,-20],[153,-27],[153,-32],[150,-37],[144,-38],[137,-35],[135,-34],[129,-32],[122,-34],[116,-35],[114,-28],[114,-22]]
+            // Real continent boundary coordinates
+            const continents = {
+                northAmerica: [
+                    [-168, 66], [-162, 71], [-152, 71], [-137, 69], [-128, 70], [-115, 69],
+                    [-95, 74], [-82, 82], [-65, 83], [-62, 76], [-66, 63], [-60, 56],
+                    [-55, 52], [-58, 47], [-64, 45], [-71, 42], [-74, 38], [-77, 34],
+                    [-81, 25], [-81, 30], [-86, 30], [-90, 29], [-97, 26], [-97, 20],
+                    [-92, 16], [-88, 16], [-83, 9], [-78, 8], [-81, 8], [-85, 12],
+                    [-92, 14], [-96, 16], [-105, 20], [-106, 23], [-110, 24], [-115, 30],
+                    [-120, 34], [-124, 40], [-124, 48], [-128, 51], [-133, 56], [-140, 59],
+                    [-150, 60], [-160, 58], [-166, 60], [-168, 66]
+                ],
+                greenland: [
+                    [-44, 60], [-35, 65], [-20, 70], [-18, 76], [-20, 81], [-30, 83],
+                    [-45, 83], [-58, 82], [-60, 78], [-53, 72], [-50, 64], [-44, 60]
+                ],
+                southAmerica: [
+                    [-77, 8], [-72, 12], [-64, 11], [-60, 10], [-52, 5], [-50, 0],
+                    [-38, -4], [-35, -7], [-35, -12], [-39, -17], [-42, -23], [-48, -28],
+                    [-53, -33], [-58, -38], [-65, -43], [-67, -55], [-74, -53], [-75, -45],
+                    [-72, -38], [-71, -30], [-76, -18], [-80, -5], [-81, -2], [-77, 8]
+                ],
+                europe: [
+                    [-9, 36], [-9, 43], [-1, 44], [0, 49], [-4, 48], [4, 52],
+                    [5, 54], [8, 57], [10, 54], [13, 55], [18, 59], [22, 60],
+                    [25, 65], [28, 70], [20, 71], [14, 68], [10, 63], [5, 62],
+                    [5, 59], [9, 53], [12, 53], [15, 54], [20, 55], [26, 58],
+                    [32, 60], [40, 66], [48, 68], [60, 68], [57, 57], [48, 50],
+                    [40, 48], [37, 45], [30, 46], [26, 41], [23, 38], [18, 41],
+                    [15, 38], [12, 44], [9, 44], [3, 43], [-3, 37], [-9, 36]
+                ],
+                britain: [
+                    [-5, 50], [1, 51], [1.5, 53], [0, 54], [-2, 58], [-5, 58],
+                    [-5, 55], [-3, 53], [-4, 51], [-5, 50]
+                ],
+                africa: [
+                    [-6, 36], [0, 36], [10, 37], [11, 33], [15, 32], [24, 32],
+                    [32, 31], [33, 28], [36, 22], [43, 13], [51, 12], [48, 8],
+                    [45, 2], [41, -4], [39, -10], [35, -20], [32, -28], [28, -34],
+                    [19, -35], [15, -28], [12, -18], [13, -9], [9, 4], [3, 6],
+                    [-3, 5], [-8, 4], [-13, 8], [-17, 14], [-16, 21], [-13, 28],
+                    [-9, 30], [-6, 36]
+                ],
+                madagascar: [[44, -12], [50, -14], [48, -25], [44, -25], [44, -12]],
+                asia: [
+                    [60, 68], [70, 73], [80, 74], [100, 77], [120, 77], [140, 74],
+                    [160, 70], [170, 66], [180, 65], [178, 62], [163, 60], [158, 52],
+                    [142, 50], [140, 46], [130, 42], [125, 38], [121, 32], [118, 25],
+                    [110, 20], [108, 14], [105, 10], [103, 1], [100, 7], [98, 15],
+                    [92, 22], [88, 22], [82, 17], [80, 9], [77, 8], [73, 16],
+                    [70, 22], [68, 24], [62, 25], [57, 26], [50, 30], [45, 30],
+                    [40, 36], [36, 36], [37, 42], [40, 44], [48, 44], [52, 38],
+                    [54, 52], [58, 56], [60, 68]
+                ],
+                japan: [
+                    [130, 32], [132, 34], [136, 35], [140, 36], [142, 40], [145, 44],
+                    [142, 45], [140, 41], [136, 37], [131, 33], [130, 32]
+                ],
+                indonesia: [
+                    [96, 5], [105, -5], [108, -7], [115, -8], [125, -8], [130, -4],
+                    [140, -3], [140, -8], [130, -8], [115, -9], [105, -7], [96, 4]
+                ],
+                australia: [
+                    [114, -22], [122, -17], [130, -13], [136, -12], [142, -11], [148, -20],
+                    [153, -27], [153, -32], [150, -37], [144, -38], [137, -35], [135, -34],
+                    [129, -32], [122, -34], [116, -35], [114, -28], [114, -22]
+                ],
+                newZealand: [[174, -36], [178, -38], [175, -41], [170, -44], [167, -46], [169, -44], [174, -36]],
+                antarctica: [
+                    [-180, -78], [-120, -75], [-65, -64], [-55, -65], [-30, -75], [0, -70],
+                    [40, -68], [80, -66], [110, -66], [140, -67], [160, -72], [180, -78]
+                ]
             };
 
-            // Draw continents — dark fill, subtle cyan outline
-            for (var key in continents) {
-                drawPoly(continents[key], '#081e3a', '#0088cc', 2.5);
+            const continentFill = '#0d2542';
+            const continentBorder = '#00d2ff';
+            for (const key in continents) {
+                drawPolygon(continents[key], continentFill, continentBorder, 3.5);
             }
 
-            // Scatter glowing dots on landmass areas
-            ctx.fillStyle = '#00aadd';
-            for (var i = 0; i < SURFACE_DOT_COUNT; i++) {
-                var rx = Math.random() * MAP_SIZE;
-                var ry = Math.random() * MAP_HALF;
-                var px = ctx.getImageData(Math.floor(rx), Math.floor(ry), 1, 1).data;
-                // Only place dots on continents (brighter pixels)
-                if (px[0] > 6 || px[1] > 20) {
-                    ctx.globalAlpha = 0.2 + Math.random() * 0.5;
-                    ctx.beginPath();
-                    ctx.arc(rx, ry, 0.8 + Math.random() * 1.8, 0, Math.PI * 2);
-                    ctx.fill();
+            // Country border lines (dashed)
+            mCtx.strokeStyle = 'rgba(0, 210, 255, 0.4)';
+            mCtx.lineWidth = 1.8;
+            mCtx.setLineDash([6, 6]);
+            const borders = [
+                [[-123, 49], [-95, 49], [-88, 48], [-83, 45], [-75, 45], [-67, 45]],
+                [[-117, 32], [-111, 31], [-106, 31.7], [-100, 28], [-97, 26]],
+                [[-70, -18], [-68, -22], [-65, -30], [-70, -42]],
+                [[2, 49], [6, 49], [7, 46], [7, 43]],
+                [[12, 47], [13, 50], [14, 54]],
+                [[-2, 43], [-1, 42], [3, 42]],
+                [[-16, 21], [10, 21], [25, 22], [35, 22]],
+                [[75, 37], [80, 35], [88, 28], [92, 27]],
+                [[80, 50], [90, 48], [115, 50], [120, 52]],
+                [[35, 32], [42, 30], [48, 30], [55, 26]]
+            ];
+            borders.forEach(b => {
+                mCtx.beginPath();
+                mCtx.moveTo(toX(b[0][0]), toY(b[0][1]));
+                for (let i = 1; i < b.length; i++) mCtx.lineTo(toX(b[i][0]), toY(b[i][1]));
+                mCtx.stroke();
+            });
+            mCtx.setLineDash([]);
+
+            // Dot matrix on landmasses
+            mCtx.fillStyle = '#00d2ff';
+            for (let i = 0; i < 1800; i++) {
+                const rx = Math.random() * mapCanvas.width;
+                const ry = Math.random() * mapCanvas.height;
+                const pixel = mCtx.getImageData(rx, ry, 1, 1).data;
+                if (pixel[0] > 10 || pixel[1] > 32) {
+                    mCtx.globalAlpha = 0.35 + Math.random() * 0.55;
+                    mCtx.beginPath();
+                    mCtx.arc(rx, ry, 1.6 + Math.random() * 2.2, 0, Math.PI * 2);
+                    mCtx.fill();
                 }
             }
-            ctx.globalAlpha = 1.0;
+            mCtx.globalAlpha = 1.0;
 
-            // ════════════════════════════════════════════
-            // MAIN EARTH SPHERE
-            // ════════════════════════════════════════════
-            var earthTexture = new THREE.CanvasTexture(mapCanvas);
-            var earthGeo = new THREE.SphereGeometry(radius, SPHERE_SEGS, SPHERE_SEGS / 2);
-            var earthMat = new THREE.MeshBasicMaterial({
-                map: earthTexture,
-                transparent: true,
-                opacity: 0.92
-            });
-            var earthMesh = new THREE.Mesh(earthGeo, earthMat);
+            // Apply texture to sphere
+            const earthTexture = new THREE.CanvasTexture(mapCanvas);
+            const earthGeo = new THREE.SphereGeometry(radius, 64, 48);
+            const earthMat = new THREE.MeshBasicMaterial({ map: earthTexture, transparent: true, opacity: 0.98 });
+            const earthMesh = new THREE.Mesh(earthGeo, earthMat);
             globeGroup.add(earthMesh);
 
-            // ════════════════════════════════════════════
-            // ATMOSPHERE — subtle wireframe glow
-            // ════════════════════════════════════════════
-            var atmosGeo = new THREE.SphereGeometry(radius * 1.03, 40, 30);
-            var atmosMat = new THREE.MeshBasicMaterial({
-                color: 0x0066aa,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.06
-            });
-            globeGroup.add(new THREE.Mesh(atmosGeo, atmosMat));
+            // Atmosphere wireframe
+            const atmosphereGeo = new THREE.SphereGeometry(radius * 1.035, 48, 36);
+            const atmosphereMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff, wireframe: true, transparent: true, opacity: 0.1 });
+            const atmosphereMesh = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+            globeGroup.add(atmosphereMesh);
 
-            // Outer atmospheric haze (BackSide glow)
-            var hazeGeo = new THREE.SphereGeometry(radius * 1.08, 32, 24);
-            var hazeMat = new THREE.MeshBasicMaterial({
-                color: 0x003366,
-                transparent: true,
-                opacity: 0.04,
-                side: THREE.BackSide
-            });
-            globeGroup.add(new THREE.Mesh(hazeGeo, hazeMat));
+            // Grid shell
+            const gridGeo = new THREE.SphereGeometry(radius * 1.008, 24, 18);
+            const gridMat = new THREE.MeshBasicMaterial({ color: 0x1d4ed8, wireframe: true, transparent: true, opacity: 0.18 });
+            const gridMesh = new THREE.Mesh(gridGeo, gridMat);
+            globeGroup.add(gridMesh);
 
-            // ════════════════════════════════════════════
-            // SURFACE PARTICLE NODES — thousands of tiny dots
-            // ════════════════════════════════════════════
-            function latLonToVec3(lat, lon, r) {
-                var phi = (90 - lat) * Math.PI / 180;
-                var theta = (lon + 180) * Math.PI / 180;
+            // Helper: lat/lon to 3D vector
+            function latLonToVector3(lat, lon, r) {
+                const phi = (90 - lat) * (Math.PI / 180);
+                const theta = (lon + 180) * (Math.PI / 180);
                 return new THREE.Vector3(
                     -(r * Math.sin(phi) * Math.cos(theta)),
                     r * Math.cos(phi),
@@ -794,187 +845,136 @@
                 );
             }
 
-            var particlePositions = new Float32Array(PARTICLE_COUNT * 3);
-            var particleColors = new Float32Array(PARTICLE_COUNT * 3);
-            var baseCyan = new THREE.Color(0x0099cc);
-            var brightCyan = new THREE.Color(0x00ddff);
-            var dimBlue = new THREE.Color(0x003355);
-
-            for (var i = 0; i < PARTICLE_COUNT; i++) {
-                // Uniform distribution on sphere
-                var u = Math.random();
-                var v = Math.random();
-                var theta = u * 2 * Math.PI;
-                var phi = Math.acos(2 * v - 1);
-                var lat = 90 - (phi * 180 / Math.PI);
-                var lon = (theta * 180 / Math.PI) - 180;
-                var pos = latLonToVec3(lat, lon, radius * 1.005);
-
-                particlePositions[i * 3] = pos.x;
-                particlePositions[i * 3 + 1] = pos.y;
-                particlePositions[i * 3 + 2] = pos.z;
-
-                // Brighter nodes on land, dimmer on ocean
-                var isLand = false;
-                if (lon >= -130 && lon <= -60 && lat >= 25 && lat <= 70) isLand = true;
-                if (lon >= -10 && lon <= 40 && lat >= 35 && lat <= 70) isLand = true;
-                if (lon >= 40 && lon <= 145 && lat >= 10 && lat <= 70) isLand = true;
-                if (lon >= -20 && lon <= 55 && lat >= -35 && lat <= 35) isLand = true;
-                if (lon >= -80 && lon <= -35 && lat >= -55 && lat <= 15) isLand = true;
-                if (lon >= 113 && lon <= 155 && lat >= -40 && lat <= -10) isLand = true;
-
-                var col;
-                if (isLand && Math.random() > 0.7) {
-                    col = brightCyan; // ~30% of land nodes glow brighter
-                } else if (isLand) {
-                    col = baseCyan;
-                } else {
-                    col = dimBlue;
-                }
-                particleColors[i * 3] = col.r;
-                particleColors[i * 3 + 1] = col.g;
-                particleColors[i * 3 + 2] = col.b;
-            }
-
-            var particleGeo = new THREE.BufferGeometry();
-            particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-            particleGeo.setAttribute('color', new THREE.BufferAttribute(particleColors, 3));
-            var particleMat = new THREE.PointsMaterial({
-                size: isMobile ? 0.6 : 0.45,
-                transparent: true,
-                opacity: 0.55,
-                vertexColors: true,
-                sizeAttenuation: true
-            });
-            var particleField = new THREE.Points(particleGeo, particleMat);
-            globeGroup.add(particleField);
-
-            // ════════════════════════════════════════════
-            // NETWORK ARCS — animated connections between cities
-            // ════════════════════════════════════════════
-            var cities = {
-                london: [51.5, -0.1], newYork: [40.7, -74], tokyo: [35.7, 139.7],
-                singapore: [1.3, 103.8], mumbai: [19.1, 72.9], sydney: [-33.9, 151.2],
-                dubai: [25.2, 55.3], moscow: [55.7, 37.6], beijing: [39.9, 116.4],
-                cairo: [30.0, 31.2], lagos: [6.5, 3.4], saoPaulo: [-23.5, -46.6]
-            };
-            var cityKeys = Object.keys(cities);
-
-            // Carefully chosen arc pairs for realistic global network topology
-            var allPairs = [
-                [0,1],[1,2],[2,3],[3,4],[4,5],[5,2],[6,7],[7,8],[8,2],
-                [9,6],[10,9],[11,1],[0,4],[2,7],[3,8]
+            // City hub nodes
+            const hubCities = [
+                { name: "New York", lat: 40.71, lon: -74.01 },
+                { name: "London", lat: 51.51, lon: -0.13 },
+                { name: "Frankfurt", lat: 50.11, lon: 8.68 },
+                { name: "Tokyo", lat: 35.68, lon: 139.65 },
+                { name: "Singapore", lat: 1.35, lon: 103.82 },
+                { name: "San Francisco", lat: 37.77, lon: -122.42 },
+                { name: "Sao Paulo", lat: -23.55, lon: -46.63 },
+                { name: "Sydney", lat: -33.87, lon: 151.21 },
+                { name: "Dubai", lat: 25.20, lon: 55.27 },
+                { name: "Virginia", lat: 38.91, lon: -77.04 },
+                { name: "Johannesburg", lat: -26.20, lon: 28.05 },
+                { name: "Hong Kong", lat: 22.32, lon: 114.17 }
             ];
-            var usedPairs = allPairs.slice(0, ARC_COUNT);
 
-            var arcData = [];
-            var arcLineMat = new THREE.LineBasicMaterial({
-                color: 0x005599,
-                transparent: true,
-                opacity: 0.25
+            const beaconNodes = [];
+            const pinGeo = new THREE.SphereGeometry(1.6, 12, 12);
+            const pinMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
+            hubCities.forEach((city, idx) => {
+                const pos = latLonToVector3(city.lat, city.lon, radius * 1.012);
+                const pin = new THREE.Mesh(pinGeo, pinMat);
+                pin.position.copy(pos);
+                globeGroup.add(pin);
+                beaconNodes.push({ pin, phase: idx * 0.6 });
             });
 
-            usedPairs.forEach(function(pair) {
-                var c1 = cities[cityKeys[pair[0]]];
-                var c2 = cities[cityKeys[pair[1]]];
-                var v1 = latLonToVec3(c1[0], c1[1], radius);
-                var v2 = latLonToVec3(c2[0], c2[1], radius);
+            // Arc connections between cities
+            const connections = [
+                [9, 1], [0, 1], [1, 2], [2, 8], [8, 4], [4, 3], [3, 5], [5, 9],
+                [9, 6], [1, 10], [4, 7], [3, 11], [11, 4]
+            ];
 
-                // Bezier midpoint lifted above surface
-                var mid = v1.clone().add(v2).multiplyScalar(0.5);
-                var lift = mid.length() + radius * 0.35;
-                mid.normalize().multiplyScalar(lift);
+            const arcGroup = new THREE.Group();
+            globeGroup.add(arcGroup);
+            const pulseMeshes = [];
 
-                var curve = new THREE.QuadraticBezierCurve3(v1, mid, v2);
-                var pts = curve.getPoints(50);
-                var geo = new THREE.BufferGeometry().setFromPoints(pts);
-                var line = new THREE.Line(geo, arcLineMat);
-                globeGroup.add(line);
+            connections.forEach(conn => {
+                const p1 = latLonToVector3(hubCities[conn[0]].lat, hubCities[conn[0]].lon, radius * 1.012);
+                const p2 = latLonToVector3(hubCities[conn[1]].lat, hubCities[conn[1]].lon, radius * 1.012);
+                const mid = new THREE.Vector3().addVectors(p1, p2).multiplyScalar(0.5);
+                const dist = p1.distanceTo(p2);
+                mid.normalize().multiplyScalar(radius + dist * 0.32);
 
-                // Traveling dot
-                var dotGeo = new THREE.SphereGeometry(0.8, 6, 6);
-                var dotMat = new THREE.MeshBasicMaterial({ color: 0x00ccff });
-                var dot = new THREE.Mesh(dotGeo, dotMat);
-                globeGroup.add(dot);
-
-                arcData.push({
-                    curve: curve,
-                    dot: dot,
-                    t: Math.random(),
-                    speed: 0.0015 + Math.random() * 0.002
+                const curve = new THREE.QuadraticBezierCurve3(p1, mid, p2);
+                const pts = curve.getPoints(50);
+                const curveGeo = new THREE.BufferGeometry().setFromPoints(pts);
+                const curveMat = new THREE.LineBasicMaterial({
+                    color: 0x00d2ff, transparent: true, opacity: 0.65,
+                    blending: THREE.AdditiveBlending
                 });
+                arcGroup.add(new THREE.Line(curveGeo, curveMat));
+
+                const pulseGeo = new THREE.SphereGeometry(1.3, 8, 8);
+                const pulseMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                const pulse = new THREE.Mesh(pulseGeo, pulseMat);
+                pulse.userData = { curve, t: Math.random(), speed: 0.0035 + Math.random() * 0.003 };
+                arcGroup.add(pulse);
+                pulseMeshes.push(pulse);
             });
 
-            // ════════════════════════════════════════════
-            // STAR FIELD — background depth
-            // ════════════════════════════════════════════
-            var starPositions = new Float32Array(STAR_COUNT * 3);
-            for (var i = 0; i < STAR_COUNT; i++) {
-                var su = Math.random(), sv = Math.random();
-                var st = su * 2 * Math.PI;
-                var sp = Math.acos(2 * sv - 1);
-                var dist = 400 + Math.random() * 400;
-                starPositions[i * 3] = dist * Math.sin(sp) * Math.cos(st);
-                starPositions[i * 3 + 1] = dist * Math.sin(sp) * Math.sin(st);
-                starPositions[i * 3 + 2] = dist * Math.cos(sp);
+            // Star/dust field
+            const dustCount = 450;
+            const dustGeo = new THREE.BufferGeometry();
+            const dustPos = new Float32Array(dustCount * 3);
+            for (let d = 0; d < dustCount; d++) {
+                dustPos[d * 3] = (Math.random() - 0.5) * 650;
+                dustPos[d * 3 + 1] = (Math.random() - 0.5) * 450;
+                dustPos[d * 3 + 2] = (Math.random() - 0.5) * 450 - 40;
             }
-            var starGeo = new THREE.BufferGeometry();
-            starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-            var starMat = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.5,
-                transparent: true,
-                opacity: 0.3
+            dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+            const dustMat = new THREE.PointsMaterial({
+                size: 2.0, color: 0x38bdf8, transparent: true, opacity: 0.4,
+                blending: THREE.AdditiveBlending
             });
-            var starField = new THREE.Points(starGeo, starMat);
-            scene.add(starField);
+            const dust = new THREE.Points(dustGeo, dustMat);
+            scene.add(dust);
 
-            // ════════════════════════════════════════════
-            // ANIMATION LOOP
-            // ════════════════════════════════════════════
+            // Mouse parallax
+            let targetMouseX = 0, targetMouseY = 0;
+            let currentMouseX = 0, currentMouseY = 0;
+            window.addEventListener('mousemove', e => {
+                targetMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+                targetMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+            });
+
+            // Resize
+            window.addEventListener('resize', () => {
+                const w = container.clientWidth || window.innerWidth;
+                const h = container.clientHeight || window.innerHeight;
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+                globeGroup.position.set(w > 900 ? 40 : 0, -5, 0);
+            });
+
+            // Animation loop
+            const clock = new THREE.Clock();
             function animate() {
                 requestAnimationFrame(animate);
+                const elapsed = clock.getElapsedTime();
 
-                // Slow continuous rotation
-                globeGroup.rotation.y += 0.0008;
-                starField.rotation.y += 0.00003;
+                currentMouseX += (targetMouseX - currentMouseX) * 0.05;
+                currentMouseY += (targetMouseY - currentMouseY) * 0.05;
 
-                // Animate arc travelers
-                for (var i = 0; i < arcData.length; i++) {
-                    var a = arcData[i];
-                    a.t = (a.t + a.speed) % 1;
-                    var pos = a.curve.getPoint(a.t);
-                    a.dot.position.copy(pos);
-                }
+                earthMesh.rotation.y = elapsed * 0.12;
+                gridMesh.rotation.y = elapsed * 0.12;
+                atmosphereMesh.rotation.y = elapsed * 0.15;
+                arcGroup.rotation.y = elapsed * 0.12;
 
+                globeGroup.rotation.x = -currentMouseY * 0.25 + 0.12;
+                globeGroup.rotation.z = currentMouseX * 0.1;
+
+                pulseMeshes.forEach(p => {
+                    p.userData.t = (p.userData.t + p.userData.speed) % 1;
+                    p.position.copy(p.userData.curve.getPoint(p.userData.t));
+                });
+
+                beaconNodes.forEach((b, i) => {
+                    const s = 1.0 + 0.45 * Math.sin(elapsed * 4 + b.phase);
+                    b.pin.scale.set(s, s, s);
+                });
+
+                dust.rotation.y = elapsed * 0.015;
                 renderer.render(scene, camera);
             }
             animate();
-
-            // ════════════════════════════════════════════
-            // RESPONSIVE RESIZE
-            // ════════════════════════════════════════════
-            window.addEventListener('resize', function() {
-                var nw = container.clientWidth || window.innerWidth;
-                var nh = container.clientHeight || window.innerHeight;
-                camera.aspect = nw / nh;
-                camera.updateProjectionMatrix();
-                renderer.setSize(nw, nh);
-
-                // Reposition globe for different screen sizes
-                if (nw < 768) {
-                    globeGroup.position.x = 0;
-                    camera.position.z = 320;
-                } else if (nw < 1024) {
-                    globeGroup.position.x = 25;
-                    camera.position.z = 300;
-                } else {
-                    globeGroup.position.x = 50;
-                    camera.position.z = 280;
-                }
-            });
         })();
     </script>
+
     {% block scripts %}{% endblock %}
 </body>
 
