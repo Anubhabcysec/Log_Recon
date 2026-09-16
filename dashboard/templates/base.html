@@ -17,7 +17,7 @@
         }
 
         body {
-            background: #060d1e;
+            background: #050508;
             color: #e0e0e0;
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
@@ -40,8 +40,8 @@
         /* SIDEBAR */
         .sidebar {
             width: 240px;
-            background: rgba(10, 14, 26, 0.92);
-            border-right: 1px solid #1a2a3a;
+            background: rgba(8, 8, 12, 0.95);
+            border-right: 1px solid #1a1a1a;
             display: flex;
             flex-direction: column;
             padding: 20px 0;
@@ -60,7 +60,7 @@
 
         .sidebar-brand {
             padding: 0 20px 24px 20px;
-            border-bottom: 1px solid #1a2a3a;
+            border-bottom: 1px solid #1a1a1a;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -87,7 +87,7 @@
             gap: 10px;
             padding: 10px 12px;
             border-radius: 8px;
-            color: #6688aa;
+            color: #666666;
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
@@ -95,13 +95,13 @@
         }
 
         .sidebar-nav a:hover {
-            background: #0d1a2a;
-            color: #00d2ff;
+            background: #111111;
+            color: #e0e0e0;
         }
 
         .sidebar-nav a.active {
-            background: #0d1a2a;
-            color: #00d2ff;
+            background: #111111;
+            color: #e0e0e0;
         }
 
         .sidebar-nav .nav-icon {
@@ -112,9 +112,9 @@
 
         .sidebar-footer {
             padding: 16px 20px;
-            border-top: 1px solid #1a2a3a;
+            border-top: 1px solid #1a1a1a;
             font-size: 12px;
-            color: #334455;
+            color: #333333;
         }
 
         /* OVERLAY */
@@ -137,8 +137,8 @@
             left: 0;
             right: 0;
             height: 56px;
-            background: rgba(6, 13, 30, 0.85);
-            border-bottom: 1px solid #0a1a2a;
+            background: rgba(5, 5, 8, 0.92);
+            border-bottom: 1px solid #111111;
             display: flex;
             align-items: center;
             padding: 0 20px;
@@ -174,7 +174,7 @@
         .topbar-title {
             font-size: 14px;
             font-weight: 600;
-            color: #00d2ff;
+            color: #ffffff;
             letter-spacing: 0.05em;
             text-transform: uppercase;
             font-family: 'JetBrains Mono', monospace;
@@ -191,12 +191,12 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            background: rgba(0, 20, 40, 0.8);
-            border: 1px solid #0a2a3a;
+            background: #0a0a0a;
+            border: 1px solid #1a1a1a;
             border-radius: 20px;
             padding: 4px 12px;
             font-size: 11px;
-            color: #6688aa;
+            color: #444444;
             font-family: 'JetBrains Mono', monospace;
         }
 
@@ -204,8 +204,8 @@
             width: 6px;
             height: 6px;
             border-radius: 50%;
-            background: #00d2ff;
-            box-shadow: 0 0 6px #00d2ff;
+            background: #22c55e;
+            box-shadow: none;
             animation: pulse-glow 2s infinite;
         }
 
@@ -214,12 +214,10 @@
             0%,
             100% {
                 opacity: 1;
-                box-shadow: 0 0 6px #00d2ff;
             }
 
             50% {
                 opacity: 0.5;
-                box-shadow: 0 0 2px #00d2ff;
             }
         }
 
@@ -235,8 +233,8 @@
 
         /* CARDS */
         .card {
-            background: rgba(10, 18, 35, 0.85);
-            border: 1px solid #0a1a2a;
+            background: rgba(10, 10, 14, 0.85);
+            border: 1px solid #1a1a1a;
             border-radius: 12px;
             padding: 24px;
             margin-bottom: 16px;
@@ -247,7 +245,7 @@
             font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.08em;
-            color: #334466;
+            color: #444444;
             text-transform: uppercase;
             margin-bottom: 16px;
             font-family: 'JetBrains Mono', monospace;
@@ -255,8 +253,8 @@
 
         /* BUTTONS */
         .btn-primary {
-            background: #00d2ff;
-            color: #000;
+            background: #ffffff;
+            color: #000000;
             border: none;
             padding: 10px 20px;
             border-radius: 8px;
@@ -265,18 +263,18 @@
             cursor: pointer;
             transition: all 0.15s;
             font-family: 'Inter', sans-serif;
-            box-shadow: 0 0 16px rgba(0, 210, 255, 0.3);
+            box-shadow: none;
         }
 
         .btn-primary:hover {
-            background: #00b8e0;
-            box-shadow: 0 0 24px rgba(0, 210, 255, 0.5);
+            background: #e0e0e0;
+            box-shadow: none;
         }
 
         .btn-secondary {
             background: transparent;
-            color: #6688aa;
-            border: 1px solid #1a2a3a;
+            color: #888888;
+            border: 1px solid #2a2a2a;
             padding: 10px 20px;
             border-radius: 8px;
             font-size: 14px;
@@ -294,8 +292,8 @@
 
         /* INPUT */
         .input-field {
-            background: rgba(6, 13, 30, 0.9);
-            border: 1px solid #0a1a2a;
+            background: #080808;
+            border: 1px solid #1a1a1a;
             border-radius: 8px;
             padding: 12px 16px;
             font-size: 14px;
@@ -308,7 +306,7 @@
 
         .input-field:focus {
             border-color: #00d2ff;
-            box-shadow: 0 0 8px rgba(0, 210, 255, 0.2);
+            box-shadow: none;
         }
 
         .input-field::placeholder {
@@ -328,16 +326,16 @@
             font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.06em;
-            color: #334466;
+            color: #333333;
             text-transform: uppercase;
-            border-bottom: 1px solid #0a1a2a;
+            border-bottom: 1px solid #1a1a1a;
             font-family: 'JetBrains Mono', monospace;
         }
 
         .data-table td {
             padding: 12px 12px;
             border-bottom: 1px solid #080f1e;
-            color: #8899aa;
+            color: #888888;
         }
 
         .data-table tr:hover td {
@@ -373,21 +371,21 @@
         }
 
         .badge-low {
-            background: #0a1a2a;
-            color: #00d2ff;
-            border: 1px solid #0a2a3a;
+            background: #0a2d0a;
+            color: #4ade80;
+            border: 1px solid #103d10;
         }
 
         .badge-port {
             background: #0a1020;
             color: #334466;
-            border: 1px solid #0a1a2a;
+            border: 1px solid #1a1a1a;
         }
 
         /* AI ANALYSIS */
         .ai-box {
             background: rgba(6, 13, 30, 0.9);
-            border-left: 2px solid #00d2ff;
+            border-left: 2px solid #222222;
             border-radius: 0 8px 8px 0;
             padding: 20px 24px;
             font-size: 14px;
@@ -423,7 +421,7 @@
         /* SCANNING */
         .scan-progress {
             background: rgba(6, 13, 30, 0.9);
-            border: 1px solid #0a1a2a;
+            border: 1px solid #1a1a1a;
             border-radius: 12px;
             padding: 32px;
             text-align: center;
@@ -437,8 +435,8 @@
         .scan-spinner {
             width: 32px;
             height: 32px;
-            border: 2px solid #0a1a2a;
-            border-top-color: #00d2ff;
+            border: 2px solid #1a1a1a;
+            border-top-color: #666666;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin: 0 auto 16px auto;
@@ -479,15 +477,15 @@
 
         /* STAT CARD */
         .stat-card {
-            background: rgba(10, 18, 35, 0.85);
-            border: 1px solid #0a1a2a;
+            background: rgba(10, 10, 14, 0.85);
+            border: 1px solid #1a1a1a;
             border-radius: 10px;
             padding: 16px 20px;
         }
 
         .stat-label {
             font-size: 11px;
-            color: #334466;
+            color: #333333;
             text-transform: uppercase;
             letter-spacing: 0.06em;
             margin-bottom: 8px;
@@ -497,7 +495,7 @@
         .stat-value {
             font-size: 22px;
             font-weight: 700;
-            color: #00d2ff;
+            color: #e0e0e0;
             font-family: 'JetBrains Mono', monospace;
         }
 
@@ -661,7 +659,7 @@
             mCtx.fillRect(0, 0, mapCanvas.width, mapCanvas.height);
 
             // Lat/Lon grid lines
-            mCtx.strokeStyle = 'rgba(0, 210, 255, 0.12)';
+            mCtx.strokeStyle = 'rgba(51, 119, 204, 0.12)';
             mCtx.lineWidth = 2.0;
             for (let lat = 0; lat <= mapCanvas.height; lat += mapCanvas.height / 18) {
                 mCtx.beginPath(); mCtx.moveTo(0, lat); mCtx.lineTo(mapCanvas.width, lat); mCtx.stroke();
@@ -670,7 +668,7 @@
                 mCtx.beginPath(); mCtx.moveTo(lon, 0); mCtx.lineTo(lon, mapCanvas.height); mCtx.stroke();
             }
             // Equator & Prime Meridian highlighted
-            mCtx.strokeStyle = 'rgba(0, 210, 255, 0.28)';
+            mCtx.strokeStyle = 'rgba(51, 119, 204, 0.28)';
             mCtx.lineWidth = 3.0;
             mCtx.beginPath(); mCtx.moveTo(0, mapCanvas.height / 2); mCtx.lineTo(mapCanvas.width, mapCanvas.height / 2); mCtx.stroke();
             mCtx.beginPath(); mCtx.moveTo(mapCanvas.width / 2, 0); mCtx.lineTo(mapCanvas.width / 2, mapCanvas.height); mCtx.stroke();
@@ -771,13 +769,13 @@
             };
 
             const continentFill = '#0d2542';
-            const continentBorder = '#00d2ff';
+            const continentBorder = '#3377cc';
             for (const key in continents) {
                 drawPolygon(continents[key], continentFill, continentBorder, 3.5);
             }
 
             // Country border lines (dashed)
-            mCtx.strokeStyle = 'rgba(0, 210, 255, 0.4)';
+            mCtx.strokeStyle = 'rgba(51, 119, 204, 0.4)';
             mCtx.lineWidth = 1.8;
             mCtx.setLineDash([6, 6]);
             const borders = [
@@ -801,7 +799,7 @@
             mCtx.setLineDash([]);
 
             // Dot matrix on landmasses
-            mCtx.fillStyle = '#00d2ff';
+            mCtx.fillStyle = '#3377cc';
             for (let i = 0; i < 1800; i++) {
                 const rx = Math.random() * mapCanvas.width;
                 const ry = Math.random() * mapCanvas.height;
@@ -824,13 +822,13 @@
 
             // Atmosphere wireframe
             const atmosphereGeo = new THREE.SphereGeometry(radius * 1.035, 48, 36);
-            const atmosphereMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff, wireframe: true, transparent: true, opacity: 0.1 });
+            const atmosphereMat = new THREE.MeshBasicMaterial({ color: 0x3377cc, wireframe: true, transparent: true, opacity: 0.1 });
             const atmosphereMesh = new THREE.Mesh(atmosphereGeo, atmosphereMat);
             globeGroup.add(atmosphereMesh);
 
             // Grid shell
             const gridGeo = new THREE.SphereGeometry(radius * 1.008, 24, 18);
-            const gridMat = new THREE.MeshBasicMaterial({ color: 0x1d4ed8, wireframe: true, transparent: true, opacity: 0.18 });
+            const gridMat = new THREE.MeshBasicMaterial({ color: 0x3377cc, wireframe: true, transparent: true, opacity: 0.18 });
             const gridMesh = new THREE.Mesh(gridGeo, gridMat);
             globeGroup.add(gridMesh);
 
@@ -863,7 +861,7 @@
 
             const beaconNodes = [];
             const pinGeo = new THREE.SphereGeometry(1.6, 12, 12);
-            const pinMat = new THREE.MeshBasicMaterial({ color: 0x00d2ff });
+            const pinMat = new THREE.MeshBasicMaterial({ color: 0x3377cc });
             hubCities.forEach((city, idx) => {
                 const pos = latLonToVector3(city.lat, city.lon, radius * 1.012);
                 const pin = new THREE.Mesh(pinGeo, pinMat);
@@ -893,7 +891,7 @@
                 const pts = curve.getPoints(50);
                 const curveGeo = new THREE.BufferGeometry().setFromPoints(pts);
                 const curveMat = new THREE.LineBasicMaterial({
-                    color: 0x00d2ff, transparent: true, opacity: 0.65,
+                    color: 0x3377cc, transparent: true, opacity: 0.65,
                     blending: THREE.AdditiveBlending
                 });
                 arcGroup.add(new THREE.Line(curveGeo, curveMat));
@@ -917,7 +915,7 @@
             }
             dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
             const dustMat = new THREE.PointsMaterial({
-                size: 2.0, color: 0x38bdf8, transparent: true, opacity: 0.4,
+                size: 2.0, color: 0x3377cc, transparent: true, opacity: 0.4,
                 blending: THREE.AdditiveBlending
             });
             const dust = new THREE.Points(dustGeo, dustMat);

@@ -249,9 +249,22 @@ def api_local_ip():
 
 
 @app.route('/api/local_ip')
-def api_local_ip_underscore():
-    """Returns detected client public IP address as JSON {"ip": "<ip>"}."""
-    return jsonify({"ip": get_client_public_ip()})
+def get_local_ip():
+    # Get visitor's real public IP from request headers
+    ip = request.headers.get('X-Forwarded-For', '').split(',')[0].strip()
+    if not ip:
+        ip = request.headers.get('X-Real-IP', '').strip()
+    if not ip:
+        ip = request.remote_addr
+    # Filter out private/internal IPs
+    import ipaddress
+    try:
+        addr = ipaddress.ip_address(ip)
+        if addr.is_private or addr.is_loopback:
+            ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    except:
+        pass
+    return jsonify({'ip': ip})
 
 
 @app.route('/scan')
