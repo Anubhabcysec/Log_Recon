@@ -1,7 +1,7 @@
 """
 detection/log_analyzer.py
 -------------------------
-Performs AI-assisted log analysis using the Groq API (groq/compound-mini).
+Performs AI-assisted log analysis using the Groq API (qwen/qwen3.8-27b).
 Translates technical log events and detected anomalies into clear,
 plain-English summaries for non-experts and defenders.
 """
@@ -10,7 +10,7 @@ import os
 from config import Config
 import httpx
 
-_MODEL = "groq/compound-mini"
+_MODEL = "qwen/qwen3.8-27b"
 _MAX_TOKENS = 2048
 _TEMPERATURE = 0.3
 

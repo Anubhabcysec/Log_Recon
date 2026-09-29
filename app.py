@@ -15,6 +15,7 @@ from detection.cve_lookup import get_cves_for_service
 from detection.mitre_mapper import map_ports_to_mitre
 from detection.ai_analyzer import analyze_with_ai
 from detection.log_analyzer import analyze_log_with_ai
+from detection.correlator import correlate as correlate_findings
 from response.pdf_generator import generate_pdf_report
 from response.notifier import send_telegram_alert
 from response.scheduler import start_scheduler
@@ -840,6 +841,70 @@ def download_report(ip):
         download_name=f"Security_Report_{ip}.pdf",
         mimetype="application/pdf"
     )
+
+
+@app.route('/correlate')
+def correlate_page():
+    """Renders the Correlated Findings page."""
+    return render_template('correlate.html')
+
+
+@app.route('/api/correlate', methods=['POST'])
+def api_correlate():
+    """
+    POST route accepting JSON {target_ip, log_text}.
+    Calls analyze_ip() for scan + abuse data, then correlate() to
+    cross-reference with log text. Returns the correlation result as JSON.
+    """
+    try:
+        data = request.get_json(silent=True) or {}
+        target_ip = data.get('target_ip', '').strip()
+        log_text = data.get('log_text', '')
+
+        if not target_ip or not is_valid_ip(target_ip):
+            return jsonify({
+                "error": f"'{target_ip}' is not a valid IPv4 or IPv6 address format."
+            }), 400
+
+        if not log_text or not log_text.strip():
+            return jsonify({"error": "log_text is required."}), 400
+
+        # 1. Get scan + abuse intelligence via existing risk_engine
+        scan_result = analyze_ip(target_ip)
+
+        # 2. Build abuse_data dict from the analyze_ip result
+        abuse_data = {
+            "totalReports": scan_result.get("total_reports", 0),
+            "abuseConfidenceScore": scan_result.get("abuse_score", 0),
+        }
+
+        # 3. Look up scan_id from the latest IPReport for FK linking
+        scan_id = None
+        session = SessionLocal()
+        try:
+            latest_report = (
+                session.query(IPReport)
+                .filter(IPReport.ip_address == target_ip)
+                .order_by(IPReport.searched_at.desc())
+                .first()
+            )
+            if latest_report:
+                scan_id = latest_report.id
+        finally:
+            session.close()
+
+        # 4. Run the correlator
+        result = correlate_findings(
+            scan_result=scan_result,
+            log_text=log_text,
+            abuse_data=abuse_data,
+            scan_id=scan_id,
+        )
+
+        return jsonify({"status": "success", "data": result})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':

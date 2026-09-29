@@ -51,7 +51,7 @@ Keep response under 300 words. No jargon.
         client = Groq(api_key=api_key, http_client=http_client)
 
         response = client.chat.completions.create(
-            model="groq/compound-mini",
+            model="qwen/qwen3.8-27b",
             messages=[
                 {
                     "role": "system",

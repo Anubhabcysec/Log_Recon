@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 960px; margin: 0 auto; color: #ffffff;">
+
+    <!-- PAGE HEADER -->
+    <div style="margin-bottom: 28px;">
+        <h1 style="font-size: 28px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em; margin-bottom: 8px;">Correlated Findings</h1>
+        <p style="font-size: 14px; color: #888888; margin: 0; line-height: 1.5;">
+            Cross-reference scan data, log evidence, and threat intelligence into one unified verdict
+        </p>
+    </div>
+
+    <!-- INPUT SECTION (single dark card) -->
+    <div class="card" style="background: #0f0f0f; border: 1px solid #222222; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+        <div style="margin-bottom: 18px;">
+            <label for="correlateIp" style="display: block; font-size: 11px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">Target IP</label>
+            <input id="correlateIp" type="text" class="input-field" placeholder="Target IP address..." autocomplete="off" style="background: #000000; border: 1px solid #222222; color: #ffffff; border-radius: 8px; padding: 12px 16px; font-size: 14px; font-family: 'JetBrains Mono', monospace; width: 100%; box-sizing: border-box;" />
+        </div>
+
+        <div style="margin-bottom: 18px;">
+            <label for="correlateLog" style="display: block; font-size: 11px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">Raw Log Content</label>
+            <textarea id="correlateLog" class="input-field" rows="15" placeholder="Paste log content to correlate against this IP scan..." style="background: #000000; border: 1px solid #222222; color: #ffffff; border-radius: 8px; padding: 14px 16px; font-size: 13px; font-family: 'JetBrains Mono', monospace; width: 100%; box-sizing: border-box; resize: vertical; line-height: 1.6;"></textarea>
+        </div>
+
+        <button id="correlateBtn" type="button" class="btn-primary" onclick="runCorrelation()" style="width: 100%; background: #ffffff; color: #000000; font-weight: 600; font-size: 14px; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s ease;">
+            Run Correlation
+        </button>
+
+        <p style="font-size: 12px; color: #555555; margin-top: 12px; margin-bottom: 0; text-align: center;">
+            LogRecon will scan this IP and cross-reference findings with your log data
+        </p>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div id="correlateProgress" class="scan-progress" style="background: #0f0f0f; border: 1px solid #222222; border-radius: 12px; padding: 36px 20px; text-align: center; display: none; margin-bottom: 24px;">
+        <div class="scan-spinner" style="width: 32px; height: 32px; border: 2px solid #222222; border-top-color: #ffffff; border-radius: 50%; margin: 0 auto 16px auto; animation: spin 0.8s linear infinite;"></div>
+        <div class="scan-label" style="font-size: 14px; color: #888888; font-family: 'JetBrains Mono', monospace;">Correlating scan data with log evidence...</div>
+    </div>
+
+    <!-- ERROR ALERT -->
+    <div id="correlateError" class="card" style="display: none; background: #160b0b; border: 1px solid #3d1010; margin-bottom: 24px; padding: 16px 20px; border-radius: 8px;">
+        <p style="color: #f87171; font-size: 14px; margin: 0; font-family: 'JetBrains Mono', monospace;" id="correlateErrorMsg"></p>
+    </div>
+
+    <!-- RESULTS SECTION (hidden until complete) -->
+    <div id="correlateResults" style="display: none;">
+
+        <!-- SUMMARY BAR -->
+        <div class="card" style="background: #0f0f0f; border: 1px solid #222222; border-radius: 12px; padding: 20px 24px; margin-bottom: 24px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #222222;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 12px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'JetBrains Mono', monospace;">Target IP:</span>
+                    <span id="summaryIp" style="font-size: 16px; font-weight: 700; color: #ffffff; font-family: 'JetBrains Mono', monospace;">–</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 12px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'JetBrains Mono', monospace;">Overall Risk:</span>
+                    <span id="summaryOverallRisk" class="risk-badge" style="font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase;">–</span>
+                </div>
+            </div>
+
+            <!-- Stats grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
+                <div style="background: #000000; border: 1px solid #222222; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-size: 11px; color: #555555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">Ports Scanned</div>
+                    <div id="statPorts" style="font-size: 22px; font-weight: 700; color: #ffffff; font-family: 'JetBrains Mono', monospace;">0</div>
+                </div>
+                <div style="background: #000000; border: 1px solid #222222; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-size: 11px; color: #555555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">CVEs Found</div>
+                    <div id="statCves" style="font-size: 22px; font-weight: 700; color: #ffffff; font-family: 'JetBrains Mono', monospace;">0</div>
+                </div>
+                <div style="background: #000000; border: 1px solid #222222; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-size: 11px; color: #555555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">Log Matches</div>
+                    <div id="statLogMatches" style="font-size: 22px; font-weight: 700; color: #ffffff; font-family: 'JetBrains Mono', monospace;">0</div>
+                </div>
+                <div style="background: #000000; border: 1px solid #222222; border-radius: 8px; padding: 14px 16px;">
+                    <div style="font-size: 11px; color: #555555; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">Abuse Reports</div>
+                    <div id="statAbuse" style="font-size: 22px; font-weight: 700; color: #ffffff; font-family: 'JetBrains Mono', monospace;">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINDINGS CARDS CONTAINER -->
+        <div style="margin-bottom: 24px;">
+            <div style="font-size: 12px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 14px; font-family: 'JetBrains Mono', monospace;">Correlated Port & Traffic Findings</div>
+            <div id="findingsContainer" style="display: flex; flex-direction: column; gap: 16px;"></div>
+        </div>
+
+        <!-- AI VERDICT BOX -->
+        <div class="card" style="background: #0f0f0f; border: 1px solid #222222; border-left: 3px solid #ffffff; border-radius: 10px; padding: 24px; margin-bottom: 32px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2">
+                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                </svg>
+                <span style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: #ffffff; font-family: 'JetBrains Mono', monospace;">Groq AI Verdict</span>
+            </div>
+            <p id="aiVerdictText" style="font-size: 14px; line-height: 1.8; color: #cccccc; margin: 0; font-family: 'Inter', sans-serif;">
+                –
+            </p>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    /* Pure Black / Dark Theme Overrides & Badges */
+    .risk-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        font-family: 'JetBrains Mono', monospace;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .badge-critical {
+        background: #2d0a0a !important;
+        color: #f87171 !important;
+        border: 1px solid #ef4444 !important;
+    }
+    .badge-high {
+        background: #2d1a0a !important;
+        color: #fb923c !important;
+        border: 1px solid #f97316 !important;
+    }
+    .badge-medium {
+        background: #2d2a0a !important;
+        color: #fbbf24 !important;
+        border: 1px solid #eab308 !important;
+    }
+    .badge-low {
+        background: #0a2d0a !important;
+        color: #4ade80 !important;
+        border: 1px solid #22c55e !important;
+    }
+    .cve-red-badge {
+        background: #2d0a0a;
+        color: #f87171;
+        border: 1px solid #ef4444;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .log-line-num {
+        color: #444444;
+        display: inline-block;
+        width: 32px;
+        user-select: none;
+        text-align: right;
+        margin-right: 12px;
+        font-family: 'JetBrains Mono', monospace;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function getRiskBadgeHtml(verdict) {
+        const v = (verdict || 'LOW').toUpperCase();
+        let cls = 'badge-low';
+        if (v === 'CRITICAL') cls = 'badge-critical';
+        else if (v === 'HIGH') cls = 'badge-high';
+        else if (v === 'MEDIUM') cls = 'badge-medium';
+        return `<span class="risk-badge ${cls}">${v}</span>`;
+    }
+
+    function runCorrelation() {
+        const ipInput = document.getElementById('correlateIp');
+        const logInput = document.getElementById('correlateLog');
+        const ip = ipInput.value.trim();
+        const log = logInput.value;
+
+        if (!ip) {
+            alert('Please enter a target IP address.');
+            ipInput.focus();
+            return;
+        }
+        if (!log.trim()) {
+            alert('Please paste raw log content.');
+            logInput.focus();
+            return;
+        }
+
+        // Loading state
+        const progressEl = document.getElementById('correlateProgress');
+        const resultsEl = document.getElementById('correlateResults');
+        const errorEl = document.getElementById('correlateError');
+        const btn = document.getElementById('correlateBtn');
+
+        progressEl.style.display = 'block';
+        resultsEl.style.display = 'none';
+        errorEl.style.display = 'none';
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+        btn.style.cursor = 'not-allowed';
+
+        fetch('/api/correlate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                target_ip: ip,
+                log_text: log
+            })
+        })
+        .then(async (response) => {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Server returned an error status.');
+            }
+            return data;
+        })
+        .then((payload) => {
+            progressEl.style.display = 'none';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+
+            const correlationData = payload.data || payload;
+            renderCorrelatedResults(correlationData);
+        })
+        .catch((err) => {
+            progressEl.style.display = 'none';
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            btn.style.cursor = 'pointer';
+
+            errorEl.style.display = 'block';
+            document.getElementById('correlateErrorMsg').textContent = err.message || 'Failed to complete correlation.';
+        });
+    }
+
+    function renderCorrelatedResults(data) {
+        const stats = data.summary_stats || {};
+        document.getElementById('summaryIp').textContent = data.ip || '–';
+        
+        // Overall Risk Badge
+        const overallRisk = (data.overall_risk || 'LOW').toUpperCase();
+        const overallEl = document.getElementById('summaryOverallRisk');
+        overallEl.textContent = overallRisk;
+        overallEl.className = 'risk-badge ' + (
+            overallRisk === 'CRITICAL' ? 'badge-critical' :
+            overallRisk === 'HIGH' ? 'badge-high' :
+            overallRisk === 'MEDIUM' ? 'badge-medium' : 'badge-low'
+        );
+
+        // Stats
+        document.getElementById('statPorts').textContent = stats.total_ports ?? 0;
+        document.getElementById('statCves').textContent = stats.total_cves ?? 0;
+        document.getElementById('statLogMatches').textContent = stats.total_log_matches ?? 0;
+        document.getElementById('statAbuse').textContent = stats.total_abuse_reports ?? 0;
+
+        // Findings Cards
+        const container = document.getElementById('findingsContainer');
+        container.innerHTML = '';
+
+        const findings = data.correlated_findings || [];
+        if (findings.length === 0) {
+            container.innerHTML = `
+                <div class="card" style="background:#0f0f0f; border:1px solid #222222; border-radius:10px; padding:20px; text-align:center; color:#666666; font-family:'JetBrains Mono',monospace; font-size:13px;">
+                    No open port or traffic correlation findings detected for this target.
+                </div>
+            `;
+        } else {
+            findings.forEach((f) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.background = '#0f0f0f';
+                card.style.border = '1px solid #222222';
+                card.style.borderRadius = '10px';
+                card.style.padding = '20px';
+                card.style.marginBottom = '0';
+
+                // Title: Port / Service
+                let titleText = '';
+                if (f.port !== null && f.port !== undefined) {
+                    titleText = `Port ${f.port} ${f.service ? '/ ' + f.service.toUpperCase() : ''}`;
+                } else {
+                    titleText = `${f.service ? f.service.toUpperCase() : 'IP Reference'}`;
+                }
+
+                // CVE Section
+                let cveHtml = '';
+                if (f.cve_id) {
+                    const sev = (f.cve_severity || 'CRITICAL').toUpperCase();
+                    cveHtml = `
+                        <div style="margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+                            <span style="font-size: 11px; font-weight: 600; color: #666666; text-transform: uppercase; font-family: 'JetBrains Mono', monospace;">CVE Finding:</span>
+                            <span class="cve-red-badge">
+                                <span>${escapeHtml(f.cve_id)}</span>
+                                <span style="opacity: 0.7; font-size: 10px;">[${escapeHtml(sev)}]</span>
+                            </span>
+                        </div>
+                    `;
+                }
+
+                // Log Evidence Section
+                const logLines = f.log_evidence || [];
+                let logHtml = '';
+                if (logLines.length > 0) {
+                    const formattedLines = logLines.map((line, idx) => {
+                        return `<div style="padding: 2px 0; white-space: pre-wrap; word-break: break-all;"><span class="log-line-num">${idx + 1}</span><span>${escapeHtml(line)}</span></div>`;
+                    }).join('');
+
+                    logHtml = `
+                        <div style="margin-bottom: 14px;">
+                            <div style="font-size: 11px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-family: 'JetBrains Mono', monospace;">Log Evidence (${logLines.length} match${logLines.length > 1 ? 'es' : ''})</div>
+                            <div style="background: #000000; border: 1px solid #222222; border-radius: 6px; padding: 12px 14px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #e0e0e0; line-height: 1.6; max-height: 220px; overflow-y: auto;">
+                                ${formattedLines}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    logHtml = `
+                        <div style="margin-bottom: 14px; font-size: 13px; color: #555555; font-style: italic;">
+                            No log activity detected for this port
+                        </div>
+                    `;
+                }
+
+                // Abuse Section
+                const abuseCount = f.abuse_reports ?? 0;
+                const abuseHtml = `
+                    <div style="font-size: 12px; color: #888888; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 8px;">
+                        <span style="color: #555555; text-transform: uppercase; font-size: 11px;">Abuse Reports:</span>
+                        <span style="color: #ffffff; font-weight: 600;">${abuseCount}</span>
+                    </div>
+                `;
+
+                card.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid #1a1a1a;">
+                        <div style="font-size: 16px; font-weight: 700; color: #ffffff; font-family: 'JetBrains Mono', monospace;">
+                            ${escapeHtml(titleText)}
+                        </div>
+                        <div>
+                            ${getRiskBadgeHtml(f.risk_verdict)}
+                        </div>
+                    </div>
+                    ${cveHtml}
+                    ${logHtml}
+                    ${abuseHtml}
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // AI Verdict
+        const aiVerdict = data.ai_verdict || 'Correlation complete. See detailed findings above.';
+        document.getElementById('aiVerdictText').textContent = aiVerdict;
+
+        // Display results block
+        document.getElementById('correlateResults').style.display = 'block';
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        const d = document.createElement('div');
+        d.textContent = str;
+        return d.innerHTML;
+    }
+</script>
+{% endblock %}

@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timezone
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -92,6 +92,58 @@ class FalsePositive(Base):
             "cve_id": self.cve_id,
             "service_name": self.service_name or "",
             "marked_at": self.marked_at.isoformat() if self.marked_at else None
+        }
+
+
+class CorrelatedFinding(Base):
+    """Model storing correlated findings that link scan results with log evidence."""
+    __tablename__ = 'correlated_findings'
+
+    id = Column(Integer, primary_key=True)
+    ip_address = Column(String(45), nullable=False, index=True)
+    scan_id = Column(Integer, ForeignKey('ip_reports.id'), nullable=True, index=True)
+    port = Column(Integer, nullable=True)
+    service = Column(String(100), nullable=True)
+    cve_id = Column(String(50), nullable=True, index=True)
+    log_evidence = Column(Text, default='[]')        # JSON array of matching log lines
+    abuse_reports_count = Column(Integer, default=0)
+    risk_verdict = Column(String(20), default='LOW') # CRITICAL / HIGH / MEDIUM / LOW
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "ip_address": self.ip_address,
+            "scan_id": self.scan_id,
+            "port": self.port,
+            "service": self.service,
+            "cve_id": self.cve_id,
+            "log_evidence": self.log_evidence,
+            "abuse_reports_count": self.abuse_reports_count,
+            "risk_verdict": self.risk_verdict,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
+class ScanLogSession(Base):
+    """Model storing a combined scan + log analysis session for later retrieval."""
+    __tablename__ = 'scan_log_sessions'
+
+    id = Column(Integer, primary_key=True)
+    ip_address = Column(String(45), nullable=False, index=True)
+    scan_data = Column(Text, default='{}')           # JSON: raw scan results
+    log_data = Column(Text, default='{}')            # JSON: parsed log entries
+    correlation_result = Column(Text, default='{}')  # JSON: correlation output
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "ip_address": self.ip_address,
+            "scan_data": self.scan_data,
+            "log_data": self.log_data,
+            "correlation_result": self.correlation_result,
+            "created_at": self.created_at.isoformat() if self.created_at else None
         }
 
 
