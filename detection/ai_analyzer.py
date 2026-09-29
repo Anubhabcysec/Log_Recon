@@ -40,10 +40,10 @@ MITRE Techniques: {mitre_text}
 Explain this scan to a non-technical person in simple English:
 1. SUMMARY: What was found (one paragraph)
 2. RISK LEVEL: Is this safe or dangerous? (one sentence)
-3. TOP CONCERNS: Up to 3 bullet points
-4. WHAT TO DO: Up to 3 simple action steps
+3. TOP CONCERNS: Up to 3 bullet points with citations
+4. WHAT TO DO: Up to 3 simple action steps with citations
 
-Keep response under 300 words. No jargon.
+You must cite specific evidence for every claim you make. Format: claim [EVIDENCE: source]. For CVEs always mention the CVE ID. For ports always mention the port number. For log activity always quote the specific log line. Never make a claim without citing where it came from. Keep total response under 400 words. No jargon.
 """
 
         transport = httpx.HTTPTransport(retries=1)
@@ -55,7 +55,7 @@ Keep response under 300 words. No jargon.
             messages=[
                 {
                     "role": "system",
-                    "content": "You are a friendly cybersecurity assistant. Explain things simply."
+                    "content": "You are a friendly cybersecurity assistant. Explain things simply. You must cite specific evidence for every claim you make. Format: claim [EVIDENCE: source]. For CVEs always mention the CVE ID. For ports always mention the port number. For log activity always quote the specific log line. Never make a claim without citing where it came from. Keep total response under 400 words."
                 },
                 {
                     "role": "user",

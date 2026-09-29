@@ -147,6 +147,32 @@ class ScanLogSession(Base):
         }
 
 
+class PortChangeLog(Base):
+    """Model tracking open port and service changes between scans for an IP."""
+    __tablename__ = 'port_change_logs'
+
+    id = Column(Integer, primary_key=True)
+    ip_address = Column(String(45), nullable=False, index=True)
+    port = Column(Integer, nullable=True)
+    service = Column(String(100), nullable=True)
+    change_type = Column(String(30), nullable=False) # NEW_PORT / CLOSED_PORT / SERVICE_CHANGED
+    previous_value = Column(String(255), nullable=True)
+    current_value = Column(String(255), nullable=True)
+    detected_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "ip_address": self.ip_address,
+            "port": self.port,
+            "service": self.service or "",
+            "change_type": self.change_type,
+            "previous_value": self.previous_value or "",
+            "current_value": self.current_value or "",
+            "detected_at": self.detected_at.isoformat() if self.detected_at else None
+        }
+
+
 def create_tables(db_path=None):
     """Creates database tables in database/database.db using create_engine directly."""
     if db_path is None:

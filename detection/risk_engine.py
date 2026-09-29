@@ -3,7 +3,7 @@ import requests
 import shodan
 from sqlalchemy.orm import sessionmaker
 from config import Config
-from database.models import IPReport, SearchHistory, create_tables
+from database.models import IPReport, SearchHistory, PortChangeLog, create_tables
 
 # Initialize database engine and sessionmaker
 engine = create_tables()
@@ -102,14 +102,25 @@ def analyze_ip(ip, db_session=None):
 
     # 3b. Add note for Google Public DNS
     note = ""
-    if ("google" in isp.lower()) or ("google.com" in domain.lower()):
+    isp_str = (isp or "").lower()
+    domain_str = (domain or "").lower()
+    if ("google" in isp_str) or ("google.com" in domain_str):
         note = "Google Public DNS Server"
 
-    # 4. Save results to database (IPReport and SearchHistory)
+    # 4. Save results to database (IPReport and SearchHistory) and detect changes
     session = db_session if db_session is not None else SessionLocal()
     close_session_on_finish = (db_session is None)
     
+    changes = []
     try:
+        # Query previous IPReport for this IP before committing the new one
+        previous_report = (
+            session.query(IPReport)
+            .filter(IPReport.ip_address == ip)
+            .order_by(IPReport.searched_at.desc(), IPReport.id.desc())
+            .first()
+        )
+
         ip_report = IPReport(
             ip_address=ip,
             abuse_score=abuse_score,
@@ -127,8 +138,84 @@ def analyze_ip(ip, db_session=None):
         session.add(ip_report)
         session.add(search_history)
         session.commit()
+
+        # Compare open_ports from current scan vs previous scan
+        if previous_report and previous_report.open_ports:
+            try:
+                prev_raw = json.loads(previous_report.open_ports)
+            except Exception:
+                prev_raw = []
+
+            def _normalize_ports_map(raw_list):
+                ports_dict = {}
+                if isinstance(raw_list, list):
+                    for item in raw_list:
+                        if isinstance(item, int):
+                            ports_dict[item] = ""
+                        elif isinstance(item, dict):
+                            p_num = item.get("port") or item.get("port_number")
+                            if p_num is not None:
+                                try:
+                                    p_num = int(p_num)
+                                    s_name = item.get("service_name") or item.get("service") or ""
+                                    ports_dict[p_num] = s_name
+                                except (ValueError, TypeError):
+                                    pass
+                return ports_dict
+
+            prev_ports_map = _normalize_ports_map(prev_raw)
+            curr_ports_map = _normalize_ports_map(open_ports)
+
+            # Detect NEW_PORT: in current but not in previous
+            for port_num, s_name in curr_ports_map.items():
+                if port_num not in prev_ports_map:
+                    change_log = PortChangeLog(
+                        ip_address=ip,
+                        port=port_num,
+                        service=s_name,
+                        change_type="NEW_PORT",
+                        previous_value=None,
+                        current_value=f"Port {port_num} ({s_name})" if s_name else f"Port {port_num}",
+                    )
+                    session.add(change_log)
+                    changes.append(change_log.to_dict())
+
+            # Detect CLOSED_PORT: in previous but not in current
+            for port_num, prev_s_name in prev_ports_map.items():
+                if port_num not in curr_ports_map:
+                    change_log = PortChangeLog(
+                        ip_address=ip,
+                        port=port_num,
+                        service=prev_s_name,
+                        change_type="CLOSED_PORT",
+                        previous_value=f"Port {port_num} ({prev_s_name})" if prev_s_name else f"Port {port_num}",
+                        current_value=None,
+                    )
+                    session.add(change_log)
+                    changes.append(change_log.to_dict())
+
+            # Detect SERVICE_CHANGED: in both but service name changed
+            for port_num in curr_ports_map.keys() & prev_ports_map.keys():
+                prev_s = prev_ports_map[port_num]
+                curr_s = curr_ports_map[port_num]
+                if prev_s and curr_s and prev_s.lower() != curr_s.lower():
+                    change_log = PortChangeLog(
+                        ip_address=ip,
+                        port=port_num,
+                        service=curr_s,
+                        change_type="SERVICE_CHANGED",
+                        previous_value=prev_s,
+                        current_value=curr_s,
+                    )
+                    session.add(change_log)
+                    changes.append(change_log.to_dict())
+
+            if changes:
+                session.commit()
+
     except Exception as db_err:
         session.rollback()
+        print(f"[risk_engine] DB error or change detection error: {db_err}")
     finally:
         if close_session_on_finish:
             session.close()
@@ -168,5 +255,6 @@ def analyze_ip(ip, db_session=None):
         "open_ports": open_ports,
         "vulnerabilities": vulnerabilities,
         "risk_level": risk_level,
-        "ai_analysis": ai_analysis
+        "ai_analysis": ai_analysis,
+        "changes": changes
     }

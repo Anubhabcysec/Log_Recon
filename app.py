@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, f
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
-from database.models import SearchHistory, IPReport, ScheduledScan, FalsePositive, create_tables
+from database.models import SearchHistory, IPReport, ScheduledScan, FalsePositive, PortChangeLog, create_tables
 from detection.risk_engine import analyze_ip
 from parser.nmap_scanner import scan_target, get_local_ip
 from parser.log_parser import parse_text_log, parse_evtx_log, find_local_logs
@@ -905,6 +905,36 @@ def api_correlate():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/port-changes/<ip>', methods=['GET'])
+def api_port_changes(ip):
+    """
+    GET route returning all PortChangeLog entries for an IP ordered by detected_at descending.
+    """
+    ip = ip.strip()
+    session = SessionLocal()
+    try:
+        # Check total number of scans/reports for this IP to determine if this is the first scan
+        scan_count = session.query(IPReport).filter(IPReport.ip_address == ip).count()
+        is_first_scan = (scan_count <= 1)
+
+        logs = (
+            session.query(PortChangeLog)
+            .filter(PortChangeLog.ip_address == ip)
+            .order_by(PortChangeLog.detected_at.desc(), PortChangeLog.id.desc())
+            .all()
+        )
+        return jsonify({
+            "ip": ip,
+            "scan_count": scan_count,
+            "is_first_scan": is_first_scan,
+            "changes": [log.to_dict() for log in logs]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
 
 
 if __name__ == '__main__':

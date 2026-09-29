@@ -145,6 +145,15 @@
             </table>
         </div>
 
+        <!-- Port Changes Section -->
+        <div class="card" id="portChangesCard" style="display: none;">
+            <div class="card-title" style="display: flex; align-items: center; justify-content: space-between;">
+                <span>Port Changes</span>
+                <span id="portChangesSubtitle" style="font-size: 11px; color: #666666; font-family: 'JetBrains Mono', monospace; text-transform: none;"></span>
+            </div>
+            <div id="portChangesContent"></div>
+        </div>
+
         <!-- CVE Findings -->
         <div class="card" id="cveCard">
             <div class="card-title">CVE Findings</div>
@@ -626,8 +635,134 @@
         // PDF link
         document.getElementById('pdfLink').href = '/download/report/' + ip;
 
+        // Fetch and display Port Changes for this IP
+        fetchPortChanges(ip);
+
         // Scroll to results
         document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function fetchPortChanges(ip) {
+        const card = document.getElementById('portChangesCard');
+        const container = document.getElementById('portChangesContent');
+        const subtitle = document.getElementById('portChangesSubtitle');
+        if (!card || !container) return;
+
+        card.style.display = 'block';
+        container.innerHTML = '<div style="color: #666; font-size: 13px; font-family: \'JetBrains Mono\', monospace; padding: 8px 0;">Checking historical changes...</div>';
+
+        try {
+            const res = await fetch(`/api/port-changes/${encodeURIComponent(ip)}`);
+            if (!res.ok) {
+                card.style.display = 'none';
+                return;
+            }
+            const data = await res.json();
+            const changes = data.changes || [];
+            const isFirstScan = data.is_first_scan;
+
+            if (isFirstScan) {
+                if (subtitle) subtitle.textContent = 'Baseline Run';
+                container.innerHTML = `
+                    <div style="padding: 16px; background: #000000; border: 1px dashed #262626; border-radius: 8px; color: #888888; font-size: 13px; font-family: 'JetBrains Mono', monospace; text-align: center;">
+                        First scan — baseline established
+                    </div>
+                `;
+                return;
+            }
+
+            if (changes.length === 0) {
+                if (subtitle) subtitle.textContent = 'No Diffs';
+                container.innerHTML = `
+                    <div style="padding: 16px; background: #000000; border: 1px solid #1a1a1a; border-radius: 8px; color: #666666; font-size: 13px; font-family: 'JetBrains Mono', monospace; text-align: center;">
+                        No changes detected since last scan
+                    </div>
+                `;
+                return;
+            }
+
+            if (subtitle) subtitle.textContent = `${changes.length} change${changes.length > 1 ? 's' : ''} recorded`;
+
+            let tableRows = '';
+            changes.forEach(c => {
+                const type = (c.change_type || '').toUpperCase();
+                let borderStyle = 'border-left: 3px solid #666666;';
+                let badgeClass = 'badge-low';
+                let badgeColor = '#4ade80';
+
+                if (type === 'NEW_PORT') {
+                    borderStyle = 'border-left: 4px solid #22c55e !important;';
+                    badgeClass = 'badge-low';
+                    badgeColor = '#4ade80';
+                } else if (type === 'CLOSED_PORT') {
+                    borderStyle = 'border-left: 4px solid #ef4444 !important;';
+                    badgeClass = 'badge-critical';
+                    badgeColor = '#f87171';
+                } else if (type === 'SERVICE_CHANGED') {
+                    borderStyle = 'border-left: 4px solid #eab308 !important;';
+                    badgeClass = 'badge-medium';
+                    badgeColor = '#fbbf24';
+                }
+
+                const detectedFormatted = (function(dStr) {
+                    if (!dStr) return '—';
+                    try {
+                        const d = new Date(dStr);
+                        return isNaN(d.getTime()) ? dStr : d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                    } catch (e) {
+                        return dStr;
+                    }
+                })(c.detected_at);
+
+                tableRows += `
+                    <tr style="${borderStyle} background: rgba(0,0,0,0.4);">
+                        <td style="padding: 10px 12px;">
+                            <span class="badge ${badgeClass}" style="font-size: 11px;">${type}</span>
+                        </td>
+                        <td style="padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #ffffff;">
+                            ${c.port !== null && c.port !== undefined ? c.port : '—'}
+                        </td>
+                        <td style="padding: 10px 12px; color: #cccccc; font-size: 13px;">
+                            ${c.service ? escapeHtml(c.service) : '—'}
+                        </td>
+                        <td style="padding: 10px 12px; color: #888888; font-family: 'JetBrains Mono', monospace; font-size: 12px;">
+                            ${c.previous_value ? escapeHtml(c.previous_value) : '—'}
+                        </td>
+                        <td style="padding: 10px 12px; color: #666666; font-family: 'JetBrains Mono', monospace; font-size: 11px; white-space: nowrap;">
+                            ${detectedFormatted}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            container.innerHTML = `
+                <table class="data-table" style="width: 100%; border-collapse: collapse; margin-top: 4px;">
+                    <thead>
+                        <tr>
+                            <th style="padding: 8px 12px;">Change Type</th>
+                            <th style="padding: 8px 12px;">Port</th>
+                            <th style="padding: 8px 12px;">Service</th>
+                            <th style="padding: 8px 12px;">Previous Value</th>
+                            <th style="padding: 8px 12px;">Detected At</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+            `;
+
+        } catch (e) {
+            console.error('Error fetching port changes:', e);
+            card.style.display = 'none';
+        }
+    }
+
+    function escapeHtml(s) {
+        if (!s) return '';
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
     }
 
     async function markFalsePositive(cveId, serviceName, rowId) {
