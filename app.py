@@ -7,7 +7,8 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, f
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
-from database.models import SearchHistory, IPReport, ScheduledScan, FalsePositive, PortChangeLog, create_tables
+from database.models import SearchHistory, IPReport, ScheduledScan, FalsePositive, PortChangeLog, AlertLog, create_tables
+from detection.alert_rules import check_rules
 from detection.risk_engine import analyze_ip
 from parser.nmap_scanner import scan_target, get_local_ip
 from parser.log_parser import parse_text_log, parse_evtx_log, find_local_logs
@@ -163,6 +164,42 @@ def api_analyze(ip):
         send_telegram_alert(result)
     except Exception as e:
         print(f"[api_analyze] Telegram alert error: {e}")
+
+    # Run rule-based alert checks and save triggered alerts
+    try:
+        triggered_alerts = check_rules(result)
+        if triggered_alerts:
+            alert_session = SessionLocal()
+            try:
+                for alert in triggered_alerts:
+                    alert_log = AlertLog(
+                        ip_address=ip,
+                        rule_name=alert["rule_name"],
+                        severity=alert["severity"],
+                        message=alert["message"],
+                        evidence=alert.get("evidence", "")
+                    )
+                    alert_session.add(alert_log)
+                    # Send Telegram for CRITICAL severity alerts
+                    if alert["severity"] == "CRITICAL":
+                        try:
+                            send_telegram_alert({
+                                "target_ip": ip,
+                                "risk_level": "CRITICAL",
+                                "open_ports": [],
+                                "cve_findings": [],
+                                "scan_time": ""
+                            })
+                        except Exception:
+                            pass
+                alert_session.commit()
+            except Exception as db_err:
+                alert_session.rollback()
+                print(f"[api_analyze] Alert DB error: {db_err}")
+            finally:
+                alert_session.close()
+    except Exception as alert_err:
+        print(f"[api_analyze] Alert rules error: {alert_err}")
 
     return jsonify({
         "status": "success",
@@ -679,6 +716,51 @@ def api_scan():
         except Exception as alert_err:
             print(f"[api_scan] Telegram alert error: {alert_err}")
 
+        # 8b. Run rule-based alert checks and save triggered alerts
+        try:
+            scan_for_rules = {
+                "ip": target_ip,
+                "target_ip": target_ip,
+                "abuse_score": intel.get("abuse_score", 0),
+                "total_reports": intel.get("total_reports", 0),
+                "open_ports": open_ports,
+                "vulnerabilities": intel.get("vulnerabilities", []),
+                "risk_level": risk_level
+            }
+            triggered_alerts = check_rules(scan_for_rules, cve_findings=cve_findings)
+            if triggered_alerts:
+                alert_session = SessionLocal()
+                try:
+                    for alert in triggered_alerts:
+                        alert_log = AlertLog(
+                            ip_address=target_ip,
+                            rule_name=alert["rule_name"],
+                            severity=alert["severity"],
+                            message=alert["message"],
+                            evidence=alert.get("evidence", "")
+                        )
+                        alert_session.add(alert_log)
+                        # Send Telegram for CRITICAL severity alerts
+                        if alert["severity"] == "CRITICAL":
+                            try:
+                                send_telegram_alert({
+                                    "target_ip": target_ip,
+                                    "risk_level": "CRITICAL",
+                                    "open_ports": open_ports,
+                                    "cve_findings": cve_findings,
+                                    "scan_time": scan_time
+                                })
+                            except Exception:
+                                pass
+                    alert_session.commit()
+                except Exception as db_err:
+                    alert_session.rollback()
+                    print(f"[api_scan] Alert DB error: {db_err}")
+                finally:
+                    alert_session.close()
+        except Exception as alert_err:
+            print(f"[api_scan] Alert rules error: {alert_err}")
+
         # 9. Return the combined result as JSON
         response_payload = {
             "target_ip": target_ip,
@@ -932,6 +1014,43 @@ def api_port_changes(ip):
             "changes": [log.to_dict() for log in logs]
         })
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/alerts')
+def alerts_page():
+    """Renders the Alert Center page."""
+    return render_template('alerts.html')
+
+
+@app.route('/api/alerts', methods=['GET'])
+def api_alerts():
+    """Returns all AlertLog entries as JSON, ordered by triggered_at descending."""
+    session = SessionLocal()
+    try:
+        alerts = session.query(AlertLog).order_by(AlertLog.triggered_at.desc()).all()
+        return jsonify([a.to_dict() for a in alerts])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/alerts/<int:alert_id>/acknowledge', methods=['POST'])
+def api_acknowledge_alert(alert_id):
+    """Marks a specific alert as acknowledged."""
+    session = SessionLocal()
+    try:
+        alert = session.query(AlertLog).filter(AlertLog.id == alert_id).first()
+        if not alert:
+            return jsonify({"error": "Alert not found."}), 404
+        alert.acknowledged = True
+        session.commit()
+        return jsonify({"status": "success", "alert": alert.to_dict()})
+    except Exception as e:
+        session.rollback()
         return jsonify({"error": str(e)}), 500
     finally:
         session.close()

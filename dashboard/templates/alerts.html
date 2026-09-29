@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .alerts-header {
+        margin-bottom: 32px;
+    }
+    .alerts-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 8px;
+    }
+    .alerts-header p {
+        color: #958eb3;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Filter Buttons */
+    .filter-bar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    .filter-btn {
+        background: rgba(14, 12, 22, 0.85);
+        border: 1px solid rgba(168, 139, 250, 0.16);
+        border-radius: 8px;
+        padding: 8px 16px;
+        color: #b0a9c8;
+        font-size: 13px;
+        font-weight: 500;
+        font-family: 'Inter', sans-serif;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .filter-btn:hover {
+        border-color: rgba(192, 168, 255, 0.4);
+        color: #ffffff;
+    }
+    .filter-btn.active {
+        background: rgba(168, 139, 250, 0.15);
+        border-color: rgba(168, 139, 250, 0.4);
+        color: #ffffff;
+    }
+
+    /* Alert Count Badge */
+    .alert-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        padding: 0 6px;
+        margin-left: 6px;
+    }
+    .count-critical { background: #2d0a0a; color: #f87171; }
+    .count-high { background: #2d1a0a; color: #fb923c; }
+    .count-medium { background: #2d2a0a; color: #fbbf24; }
+
+    /* Alerts Table */
+    .alerts-card {
+        background: rgba(14, 12, 22, 0.85);
+        border: 1px solid rgba(168, 139, 250, 0.16);
+        border-radius: 12px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        overflow: hidden;
+    }
+    .alerts-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .alerts-table thead th {
+        text-align: left;
+        padding: 14px 16px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: #958eb3;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(168, 139, 250, 0.12);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .alerts-table tbody tr {
+        border-bottom: 1px solid rgba(168, 139, 250, 0.08);
+        transition: all 0.15s ease;
+    }
+    .alerts-table tbody tr:hover {
+        background: rgba(168, 139, 250, 0.04);
+    }
+    .alerts-table tbody td {
+        padding: 14px 16px;
+        color: #c9c3e2;
+        vertical-align: middle;
+    }
+
+    /* Unacknowledged red left border */
+    .alerts-table tbody tr.unacknowledged {
+        border-left: 3px solid #f87171;
+    }
+    /* Acknowledged row greyed out */
+    .alerts-table tbody tr.acknowledged {
+        opacity: 0.45;
+        border-left: 3px solid transparent;
+    }
+
+    /* Severity Badges */
+    .severity-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+    }
+    .sev-critical { background: #2d0a0a; color: #f87171; border: 1px solid #3d1010; }
+    .sev-high { background: #2d1a0a; color: #fb923c; border: 1px solid #3d2510; }
+    .sev-medium { background: #2d2a0a; color: #fbbf24; border: 1px solid #3d3510; }
+
+    /* Rule name label */
+    .rule-label {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: #a49dc2;
+        background: rgba(22, 18, 36, 0.85);
+        border: 1px solid rgba(168, 139, 250, 0.18);
+        border-radius: 4px;
+        padding: 2px 8px;
+    }
+
+    /* Acknowledge button */
+    .ack-btn {
+        background: transparent;
+        border: 1px solid rgba(168, 139, 250, 0.25);
+        border-radius: 6px;
+        padding: 6px 14px;
+        color: #b0a9c8;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    .ack-btn:hover {
+        background: rgba(168, 139, 250, 0.12);
+        border-color: rgba(168, 139, 250, 0.4);
+        color: #ffffff;
+    }
+    .ack-btn.acked {
+        color: #4ade80;
+        border-color: rgba(74, 222, 128, 0.25);
+        cursor: default;
+        pointer-events: none;
+    }
+
+    /* IP link */
+    .ip-link {
+        color: #e2ddf4;
+        text-decoration: none;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+    }
+    .ip-link:hover {
+        color: #ffffff;
+        text-decoration: underline;
+    }
+
+    /* Time display */
+    .alert-time {
+        font-size: 12px;
+        color: #958eb3;
+        font-family: 'JetBrains Mono', monospace;
+        white-space: nowrap;
+    }
+
+    /* Empty state */
+    .empty-state {
+        text-align: center;
+        padding: 64px 24px;
+        color: #958eb3;
+        font-size: 14px;
+    }
+    .empty-state svg {
+        margin-bottom: 16px;
+        opacity: 0.4;
+    }
+
+    /* Loading */
+    .alerts-loading {
+        text-align: center;
+        padding: 48px 24px;
+        color: #958eb3;
+    }
+    .alerts-spinner {
+        width: 28px;
+        height: 28px;
+        border: 2px solid rgba(168, 139, 250, 0.15);
+        border-top-color: #a78bfa;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 16px auto;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* Evidence tooltip */
+    .evidence-text {
+        font-size: 12px;
+        color: #7a74a0;
+        font-style: italic;
+        margin-top: 4px;
+        line-height: 1.4;
+    }
+
+    /* Message text */
+    .alert-message {
+        color: #e2ddf4;
+        font-size: 13px;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+        .alerts-table thead { display: none; }
+        .alerts-table tbody tr {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 8px;
+        }
+        .alerts-table tbody td {
+            padding: 4px 0;
+        }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="alerts-header">
+    <h1>Alert Center</h1>
+    <p>Rule-based detections across all scans</p>
+</div>
+
+<!-- Filter Buttons -->
+<div class="filter-bar">
+    <button class="filter-btn active" onclick="filterAlerts('all')" data-filter="all">All</button>
+    <button class="filter-btn" onclick="filterAlerts('CRITICAL')" data-filter="CRITICAL">Critical <span class="alert-count count-critical" id="count-critical">0</span></button>
+    <button class="filter-btn" onclick="filterAlerts('HIGH')" data-filter="HIGH">High <span class="alert-count count-high" id="count-high">0</span></button>
+    <button class="filter-btn" onclick="filterAlerts('MEDIUM')" data-filter="MEDIUM">Medium <span class="alert-count count-medium" id="count-medium">0</span></button>
+    <button class="filter-btn" onclick="filterAlerts('unacknowledged')" data-filter="unacknowledged">Unacknowledged</button>
+</div>
+
+<!-- Alerts Table -->
+<div class="alerts-card">
+    <!-- Loading State -->
+    <div class="alerts-loading" id="alertsLoading">
+        <div class="alerts-spinner"></div>
+        <div>Loading alerts...</div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <div>No alerts triggered yet. Run a scan to start monitoring.</div>
+    </div>
+
+    <!-- Table -->
+    <table class="alerts-table" id="alertsTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Severity</th>
+                <th>IP Address</th>
+                <th>Rule</th>
+                <th>Message</th>
+                <th>Time</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="alertsBody">
+        </tbody>
+    </table>
+</div>
+
+<script>
+    let allAlerts = [];
+    let currentFilter = 'all';
+
+    // Load alerts on page load
+    document.addEventListener('DOMContentLoaded', loadAlerts);
+
+    async function loadAlerts() {
+        document.getElementById('alertsLoading').style.display = 'block';
+        document.getElementById('alertsTable').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
+
+        try {
+            const res = await fetch('/api/alerts');
+            const data = await res.json();
+            allAlerts = data;
+            updateCounts();
+            renderAlerts();
+        } catch (err) {
+            console.error('Failed to load alerts:', err);
+            document.getElementById('alertsLoading').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+    }
+
+    function updateCounts() {
+        const critical = allAlerts.filter(a => a.severity === 'CRITICAL').length;
+        const high = allAlerts.filter(a => a.severity === 'HIGH').length;
+        const medium = allAlerts.filter(a => a.severity === 'MEDIUM').length;
+        document.getElementById('count-critical').textContent = critical;
+        document.getElementById('count-high').textContent = high;
+        document.getElementById('count-medium').textContent = medium;
+    }
+
+    function filterAlerts(filter) {
+        currentFilter = filter;
+        // Update active button
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-filter') === filter);
+        });
+        renderAlerts();
+    }
+
+    function renderAlerts() {
+        document.getElementById('alertsLoading').style.display = 'none';
+        const tbody = document.getElementById('alertsBody');
+        tbody.innerHTML = '';
+
+        let filtered = allAlerts;
+        if (currentFilter === 'CRITICAL' || currentFilter === 'HIGH' || currentFilter === 'MEDIUM') {
+            filtered = allAlerts.filter(a => a.severity === currentFilter);
+        } else if (currentFilter === 'unacknowledged') {
+            filtered = allAlerts.filter(a => !a.acknowledged);
+        }
+
+        if (filtered.length === 0) {
+            document.getElementById('alertsTable').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('alertsTable').style.display = 'table';
+        document.getElementById('emptyState').style.display = 'none';
+
+        filtered.forEach(alert => {
+            const tr = document.createElement('tr');
+            tr.className = alert.acknowledged ? 'acknowledged' : 'unacknowledged';
+            tr.setAttribute('data-severity', alert.severity);
+            tr.setAttribute('data-id', alert.id);
+
+            const sevClass = alert.severity === 'CRITICAL' ? 'sev-critical' :
+                             alert.severity === 'HIGH' ? 'sev-high' : 'sev-medium';
+
+            const timeStr = alert.triggered_at ? new Date(alert.triggered_at).toLocaleString() : 'N/A';
+
+            const ackBtnHtml = alert.acknowledged
+                ? '<button class="ack-btn acked">✓ Acknowledged</button>'
+                : `<button class="ack-btn" onclick="acknowledgeAlert(${alert.id}, this)">Acknowledge</button>`;
+
+            tr.innerHTML = `
+                <td><span class="severity-badge ${sevClass}">${alert.severity}</span></td>
+                <td><a href="/report/${alert.ip_address}" class="ip-link">${alert.ip_address}</a></td>
+                <td><span class="rule-label">${alert.rule_name}</span></td>
+                <td>
+                    <div class="alert-message">${alert.message}</div>
+                    <div class="evidence-text">${alert.evidence || ''}</div>
+                </td>
+                <td><span class="alert-time">${timeStr}</span></td>
+                <td>${ackBtnHtml}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function acknowledgeAlert(id, btn) {
+        try {
+            const res = await fetch(`/api/alerts/${id}/acknowledge`, { method: 'POST' });
+            if (res.ok) {
+                // Update local data
+                const alert = allAlerts.find(a => a.id === id);
+                if (alert) alert.acknowledged = true;
+
+                // Update the row visually
+                const row = btn.closest('tr');
+                row.classList.remove('unacknowledged');
+                row.classList.add('acknowledged');
+                btn.textContent = '✓ Acknowledged';
+                btn.classList.add('acked');
+            }
+        } catch (err) {
+            console.error('Failed to acknowledge alert:', err);
+        }
+    }
+</script>
+{% endblock %}

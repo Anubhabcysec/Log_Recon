@@ -1,6 +1,6 @@
 import os
 from datetime import datetime, timezone
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -170,6 +170,32 @@ class PortChangeLog(Base):
             "previous_value": self.previous_value or "",
             "current_value": self.current_value or "",
             "detected_at": self.detected_at.isoformat() if self.detected_at else None
+        }
+
+
+class AlertLog(Base):
+    """Model storing rule-based alert detections triggered during scans."""
+    __tablename__ = 'alert_logs'
+
+    id = Column(Integer, primary_key=True)
+    ip_address = Column(String(45), nullable=False, index=True)
+    rule_name = Column(String(50), nullable=False, index=True)
+    severity = Column(String(20), nullable=False)    # CRITICAL / HIGH / MEDIUM
+    message = Column(Text, nullable=False)
+    evidence = Column(Text, default='')
+    triggered_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+    acknowledged = Column(Boolean, default=False, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "ip_address": self.ip_address,
+            "rule_name": self.rule_name,
+            "severity": self.severity,
+            "message": self.message,
+            "evidence": self.evidence or "",
+            "triggered_at": self.triggered_at.isoformat() if self.triggered_at else None,
+            "acknowledged": self.acknowledged
         }
 
 
