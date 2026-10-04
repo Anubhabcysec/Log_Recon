@@ -199,6 +199,38 @@ class AlertLog(Base):
         }
 
 
+class Asset(Base):
+    """Model storing registered network assets for inventory tracking."""
+    __tablename__ = 'assets'
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255), nullable=False)
+    ip_address = Column(String(45), nullable=False, index=True)
+    asset_type = Column(String(50), default='OTHER')  # SERVER / WORKSTATION / ROUTER / DATABASE / OTHER
+    owner = Column(String(255), default='')
+    description = Column(Text, default='')
+    is_authorized = Column(Boolean, default=True, nullable=False)
+    last_scanned = Column(DateTime, nullable=True)
+    risk_level = Column(String(50), nullable=True)
+    notes = Column(Text, default='')
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None), nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "ip_address": self.ip_address,
+            "asset_type": self.asset_type,
+            "owner": self.owner or "",
+            "description": self.description or "",
+            "is_authorized": self.is_authorized,
+            "last_scanned": self.last_scanned.isoformat() if self.last_scanned else None,
+            "risk_level": self.risk_level,
+            "notes": self.notes or "",
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
+
+
 def create_tables(db_path=None):
     """Creates database tables in database/database.db using create_engine directly."""
     if db_path is None:

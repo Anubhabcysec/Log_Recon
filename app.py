@@ -7,7 +7,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify, f
 from sqlalchemy.orm import sessionmaker
 
 from config import Config
-from database.models import SearchHistory, IPReport, ScheduledScan, FalsePositive, PortChangeLog, AlertLog, create_tables
+from database.models import SearchHistory, IPReport, ScheduledScan, FalsePositive, PortChangeLog, AlertLog, Asset, create_tables
 from detection.alert_rules import check_rules
 from detection.risk_engine import analyze_ip
 from parser.nmap_scanner import scan_target, get_local_ip
@@ -201,10 +201,23 @@ def api_analyze(ip):
     except Exception as alert_err:
         print(f"[api_analyze] Alert rules error: {alert_err}")
 
+    # Check if scanned IP exists in Asset inventory
+    unauthorized_asset = True
+    try:
+        asset_session = SessionLocal()
+        try:
+            existing_asset = asset_session.query(Asset).filter(Asset.ip_address == ip).first()
+            unauthorized_asset = existing_asset is None
+        finally:
+            asset_session.close()
+    except Exception:
+        pass
+
     return jsonify({
         "status": "success",
         "data": result,
-        "ai_analysis": result.get("ai_analysis", "")
+        "ai_analysis": result.get("ai_analysis", ""),
+        "unauthorized_asset": unauthorized_asset
     })
 
 
@@ -1049,6 +1062,112 @@ def api_acknowledge_alert(alert_id):
         alert.acknowledged = True
         session.commit()
         return jsonify({"status": "success", "alert": alert.to_dict()})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/assets')
+def assets_page():
+    """Renders the Asset Inventory page."""
+    return render_template('assets.html')
+
+
+@app.route('/api/assets', methods=['GET'])
+def api_assets():
+    """Returns all Asset entries as JSON, ordered by created_at descending."""
+    session = SessionLocal()
+    try:
+        assets = session.query(Asset).order_by(Asset.created_at.desc()).all()
+        return jsonify([a.to_dict() for a in assets])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/assets/add', methods=['POST'])
+def api_assets_add():
+    """Creates a new Asset record from JSON payload."""
+    data = request.get_json(silent=True) or {}
+    name = data.get('name', '').strip()
+    ip_addr = data.get('ip_address', '').strip()
+    asset_type = data.get('asset_type', 'OTHER').strip().upper()
+    owner = data.get('owner', '').strip()
+    description = data.get('description', '').strip()
+    notes = data.get('notes', '').strip()
+
+    if not name:
+        return jsonify({"error": "Asset name is required."}), 400
+    if not ip_addr or not is_valid_ip(ip_addr):
+        return jsonify({"error": f"'{ip_addr}' is not a valid IPv4 or IPv6 address."}), 400
+    if asset_type not in ('SERVER', 'WORKSTATION', 'ROUTER', 'DATABASE', 'OTHER'):
+        asset_type = 'OTHER'
+
+    session = SessionLocal()
+    try:
+        new_asset = Asset(
+            name=name,
+            ip_address=ip_addr,
+            asset_type=asset_type,
+            owner=owner,
+            description=description,
+            notes=notes,
+            is_authorized=True
+        )
+        session.add(new_asset)
+        session.commit()
+        return jsonify({"status": "success", "asset": new_asset.to_dict()}), 201
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/assets/<int:asset_id>', methods=['DELETE'])
+def api_assets_delete(asset_id):
+    """Deletes an asset by ID."""
+    session = SessionLocal()
+    try:
+        asset = session.query(Asset).filter(Asset.id == asset_id).first()
+        if not asset:
+            return jsonify({"error": "Asset not found."}), 404
+        session.delete(asset)
+        session.commit()
+        return jsonify({"status": "success", "message": f"Asset {asset_id} removed."})
+    except Exception as e:
+        session.rollback()
+        return jsonify({"error": str(e)}), 500
+    finally:
+        session.close()
+
+
+@app.route('/api/assets/<int:asset_id>/scan', methods=['PUT'])
+def api_assets_scan(asset_id):
+    """Triggers analyze_ip() on the asset's IP and updates last_scanned and risk_level."""
+    session = SessionLocal()
+    try:
+        asset = session.query(Asset).filter(Asset.id == asset_id).first()
+        if not asset:
+            return jsonify({"error": "Asset not found."}), 404
+
+        # Run analysis on the asset's IP
+        result = analyze_ip(asset.ip_address)
+        risk_level = result.get("risk_level", "LOW")
+
+        # Update asset record
+        asset.last_scanned = datetime.now(timezone.utc).replace(tzinfo=None)
+        asset.risk_level = risk_level
+        session.commit()
+
+        return jsonify({
+            "status": "success",
+            "asset": asset.to_dict(),
+            "scan_result": result
+        })
     except Exception as e:
         session.rollback()
         return jsonify({"error": str(e)}), 500

@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .assets-header {
+        margin-bottom: 32px;
+    }
+    .assets-header h1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 8px;
+    }
+    .assets-header p {
+        color: #958eb3;
+        font-size: 14px;
+        line-height: 1.6;
+    }
+
+    /* Add Asset Form Card */
+    .add-asset-card {
+        background: rgba(14, 12, 22, 0.85);
+        border: 1px solid rgba(168, 139, 250, 0.16);
+        border-radius: 12px;
+        padding: 28px;
+        margin-bottom: 28px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+    }
+    .add-asset-card h2 {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+    }
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    .form-label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #958eb3;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .form-input, .form-select, .form-textarea {
+        background: rgba(22, 18, 36, 0.85);
+        border: 1px solid rgba(168, 139, 250, 0.2);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #e2ddf4;
+        font-size: 13px;
+        font-family: 'Inter', sans-serif;
+        outline: none;
+        transition: border-color 0.2s ease;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        border-color: rgba(168, 139, 250, 0.5);
+    }
+    .form-input::placeholder, .form-textarea::placeholder {
+        color: #6b6589;
+    }
+    .form-select {
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23958eb3' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 32px;
+    }
+    .form-select option {
+        background: #1a1528;
+        color: #e2ddf4;
+    }
+    .form-textarea {
+        resize: vertical;
+        min-height: 60px;
+    }
+    .submit-btn {
+        background: #ffffff;
+        color: #0b0914;
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        padding: 11px 24px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        font-family: 'Inter', sans-serif;
+        transition: all 0.2s ease;
+        margin-top: 8px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .submit-btn:hover {
+        background: #f4f0fd;
+        box-shadow: 0 4px 18px rgba(168, 139, 250, 0.3);
+        transform: translateY(-1px);
+    }
+    .submit-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Warning banner */
+    .warning-banner {
+        background: rgba(251, 146, 60, 0.08);
+        border: 1px solid rgba(251, 146, 60, 0.3);
+        border-radius: 10px;
+        padding: 14px 20px;
+        margin-bottom: 24px;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        color: #fb923c;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .warning-banner svg {
+        flex-shrink: 0;
+    }
+
+    /* Assets Table */
+    .assets-card {
+        background: rgba(14, 12, 22, 0.85);
+        border: 1px solid rgba(168, 139, 250, 0.16);
+        border-radius: 12px;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        overflow: hidden;
+    }
+    .assets-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+    }
+    .assets-table thead th {
+        text-align: left;
+        padding: 14px 16px;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: #958eb3;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(168, 139, 250, 0.12);
+        font-family: 'JetBrains Mono', monospace;
+    }
+    .assets-table tbody tr {
+        border-bottom: 1px solid rgba(168, 139, 250, 0.08);
+        transition: all 0.15s ease;
+    }
+    .assets-table tbody tr:hover {
+        background: rgba(168, 139, 250, 0.04);
+    }
+    .assets-table tbody td {
+        padding: 14px 16px;
+        color: #c9c3e2;
+        vertical-align: middle;
+    }
+
+    /* Type Badge */
+    .type-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+        background: rgba(22, 18, 36, 0.85);
+        border: 1px solid rgba(168, 139, 250, 0.18);
+        color: #a49dc2;
+    }
+
+    /* Risk Level Badges */
+    .risk-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        font-family: 'JetBrains Mono', monospace;
+        text-transform: uppercase;
+    }
+    .risk-critical { background: #2d0a0a; color: #f87171; border: 1px solid #3d1010; }
+    .risk-high { background: #2d1a0a; color: #fb923c; border: 1px solid #3d2510; }
+    .risk-medium { background: #2d2a0a; color: #fbbf24; border: 1px solid #3d3510; }
+    .risk-low { background: #0a2d14; color: #4ade80; border: 1px solid #103d1a; }
+    .risk-none { background: rgba(22, 18, 36, 0.85); color: #6b6589; border: 1px solid rgba(168, 139, 250, 0.12); }
+
+    /* IP link */
+    .asset-ip {
+        color: #e2ddf4;
+        text-decoration: none;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 13px;
+    }
+    .asset-ip:hover {
+        color: #ffffff;
+        text-decoration: underline;
+    }
+
+    /* Asset name */
+    .asset-name {
+        font-weight: 600;
+        color: #ffffff;
+    }
+
+    /* Scanned time */
+    .scan-time {
+        font-size: 12px;
+        color: #958eb3;
+        font-family: 'JetBrains Mono', monospace;
+        white-space: nowrap;
+    }
+
+    /* Action buttons */
+    .action-btn {
+        background: transparent;
+        border: 1px solid rgba(168, 139, 250, 0.25);
+        border-radius: 6px;
+        padding: 6px 12px;
+        color: #b0a9c8;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: 'Inter', sans-serif;
+    }
+    .action-btn:hover {
+        background: rgba(168, 139, 250, 0.12);
+        border-color: rgba(168, 139, 250, 0.4);
+        color: #ffffff;
+    }
+    .action-btn.scan-btn:hover {
+        border-color: rgba(74, 222, 128, 0.4);
+        color: #4ade80;
+    }
+    .action-btn.remove-btn:hover {
+        border-color: rgba(248, 113, 113, 0.4);
+        color: #f87171;
+    }
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    .actions-cell {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    /* Loading & Empty */
+    .assets-loading {
+        text-align: center;
+        padding: 48px 24px;
+        color: #958eb3;
+    }
+    .assets-spinner {
+        width: 28px;
+        height: 28px;
+        border: 2px solid rgba(168, 139, 250, 0.15);
+        border-top-color: #a78bfa;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 16px auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .empty-state {
+        text-align: center;
+        padding: 64px 24px;
+        color: #958eb3;
+        font-size: 14px;
+    }
+    .empty-state svg {
+        margin-bottom: 16px;
+        opacity: 0.4;
+    }
+
+    /* Toast notification */
+    .toast {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        background: rgba(14, 12, 22, 0.95);
+        border: 1px solid rgba(168, 139, 250, 0.3);
+        border-radius: 10px;
+        padding: 14px 20px;
+        color: #e2ddf4;
+        font-size: 13px;
+        font-family: 'Inter', sans-serif;
+        backdrop-filter: blur(12px);
+        z-index: 9999;
+        transform: translateY(80px);
+        opacity: 0;
+        transition: all 0.3s ease;
+        max-width: 360px;
+    }
+    .toast.show {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    .toast.success { border-color: rgba(74, 222, 128, 0.4); }
+    .toast.error { border-color: rgba(248, 113, 113, 0.4); }
+
+    @media (max-width: 860px) {
+        .form-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    @media (max-width: 580px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        .assets-table thead { display: none; }
+        .assets-table tbody tr {
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            gap: 8px;
+        }
+        .assets-table tbody td { padding: 4px 0; }
+        .actions-cell { flex-wrap: wrap; }
+    }
+</style>
+
+<!-- Page Header -->
+<div class="assets-header">
+    <h1>Asset Inventory</h1>
+    <p>Track and monitor your authorized systems</p>
+</div>
+
+<!-- Unauthorized scan warning banner (shown dynamically) -->
+<div class="warning-banner" id="unauthorizedBanner">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+    <span id="unauthorizedText">Unauthorized scan detected — this IP is not in your asset inventory</span>
+</div>
+
+<!-- Add Asset Form -->
+<div class="add-asset-card">
+    <h2>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        Add New Asset
+    </h2>
+    <form id="addAssetForm" onsubmit="return addAsset(event)">
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label" for="assetName">Name</label>
+                <input type="text" id="assetName" class="form-input" placeholder="e.g. Web Server 01" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="assetIP">IP Address</label>
+                <input type="text" id="assetIP" class="form-input" placeholder="e.g. 192.168.1.10" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="assetType">Asset Type</label>
+                <select id="assetType" class="form-select">
+                    <option value="SERVER">Server</option>
+                    <option value="WORKSTATION">Workstation</option>
+                    <option value="ROUTER">Router</option>
+                    <option value="DATABASE">Database</option>
+                    <option value="OTHER">Other</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="assetOwner">Owner</label>
+                <input type="text" id="assetOwner" class="form-input" placeholder="e.g. IT Operations">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label class="form-label" for="assetDesc">Description</label>
+                <input type="text" id="assetDesc" class="form-input" placeholder="e.g. Production web application server">
+            </div>
+            <div class="form-group full-width">
+                <label class="form-label" for="assetNotes">Notes</label>
+                <textarea id="assetNotes" class="form-textarea" placeholder="Optional notes about this asset..."></textarea>
+            </div>
+        </div>
+        <button type="submit" class="submit-btn" id="submitBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add Asset
+        </button>
+    </form>
+</div>
+
+<!-- Assets Table -->
+<div class="assets-card">
+    <!-- Loading State -->
+    <div class="assets-loading" id="assetsLoading">
+        <div class="assets-spinner"></div>
+        <div>Loading assets...</div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" id="emptyState" style="display: none;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+        </svg>
+        <div>No assets added yet. Add your first asset above.</div>
+    </div>
+
+    <!-- Table -->
+    <table class="assets-table" id="assetsTable" style="display: none;">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>IP Address</th>
+                <th>Type</th>
+                <th>Owner</th>
+                <th>Risk Level</th>
+                <th>Last Scanned</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="assetsBody">
+        </tbody>
+    </table>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+    let allAssets = [];
+
+    document.addEventListener('DOMContentLoaded', loadAssets);
+
+    async function loadAssets() {
+        document.getElementById('assetsLoading').style.display = 'block';
+        document.getElementById('assetsTable').style.display = 'none';
+        document.getElementById('emptyState').style.display = 'none';
+
+        try {
+            const res = await fetch('/api/assets');
+            const data = await res.json();
+            allAssets = data;
+            renderAssets();
+        } catch (err) {
+            console.error('Failed to load assets:', err);
+            document.getElementById('assetsLoading').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+    }
+
+    function renderAssets() {
+        document.getElementById('assetsLoading').style.display = 'none';
+        const tbody = document.getElementById('assetsBody');
+        tbody.innerHTML = '';
+
+        if (allAssets.length === 0) {
+            document.getElementById('assetsTable').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+            return;
+        }
+
+        document.getElementById('assetsTable').style.display = 'table';
+        document.getElementById('emptyState').style.display = 'none';
+
+        allAssets.forEach(asset => {
+            const tr = document.createElement('tr');
+
+            // Risk badge
+            let riskClass = 'risk-none';
+            let riskLabel = 'Not scanned';
+            if (asset.risk_level) {
+                riskLabel = asset.risk_level;
+                switch (asset.risk_level) {
+                    case 'CRITICAL': riskClass = 'risk-critical'; break;
+                    case 'HIGH': riskClass = 'risk-high'; break;
+                    case 'MEDIUM': riskClass = 'risk-medium'; break;
+                    case 'LOW': riskClass = 'risk-low'; break;
+                    default: riskClass = 'risk-none';
+                }
+            }
+
+            const scanTime = asset.last_scanned
+                ? new Date(asset.last_scanned).toLocaleString()
+                : '—';
+
+            tr.innerHTML = `
+                <td><span class="asset-name">${escapeHtml(asset.name)}</span></td>
+                <td><a href="/report/${asset.ip_address}" class="asset-ip">${asset.ip_address}</a></td>
+                <td><span class="type-badge">${asset.asset_type}</span></td>
+                <td>${escapeHtml(asset.owner || '—')}</td>
+                <td><span class="risk-badge ${riskClass}">${riskLabel}</span></td>
+                <td><span class="scan-time">${scanTime}</span></td>
+                <td>
+                    <div class="actions-cell">
+                        <button class="action-btn scan-btn" onclick="scanAsset(${asset.id}, this)" title="Scan this asset">Scan Now</button>
+                        <button class="action-btn remove-btn" onclick="removeAsset(${asset.id}, this)" title="Remove this asset">Remove</button>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function addAsset(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = 'Adding...';
+
+        const payload = {
+            name: document.getElementById('assetName').value.trim(),
+            ip_address: document.getElementById('assetIP').value.trim(),
+            asset_type: document.getElementById('assetType').value,
+            owner: document.getElementById('assetOwner').value.trim(),
+            description: document.getElementById('assetDesc').value.trim(),
+            notes: document.getElementById('assetNotes').value.trim()
+        };
+
+        try {
+            const res = await fetch('/api/assets/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                showToast('Asset added successfully', 'success');
+                document.getElementById('addAssetForm').reset();
+                await loadAssets();
+            } else {
+                showToast(data.error || 'Failed to add asset', 'error');
+            }
+        } catch (err) {
+            showToast('Network error — could not add asset', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Asset';
+        }
+    }
+
+    async function scanAsset(id, btn) {
+        btn.disabled = true;
+        const origText = btn.textContent;
+        btn.textContent = 'Scanning...';
+
+        try {
+            const res = await fetch(`/api/assets/${id}/scan`, { method: 'PUT' });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                showToast(`Scan complete — Risk: ${data.asset.risk_level || 'N/A'}`, 'success');
+                await loadAssets();
+            } else {
+                showToast(data.error || 'Scan failed', 'error');
+            }
+        } catch (err) {
+            showToast('Network error — scan failed', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = origText;
+        }
+    }
+
+    async function removeAsset(id, btn) {
+        btn.disabled = true;
+        btn.textContent = 'Removing...';
+
+        try {
+            const res = await fetch(`/api/assets/${id}`, { method: 'DELETE' });
+            const data = await res.json();
+
+            if (res.ok && data.status === 'success') {
+                showToast('Asset removed', 'success');
+                await loadAssets();
+            } else {
+                showToast(data.error || 'Failed to remove asset', 'error');
+            }
+        } catch (err) {
+            showToast('Network error — could not remove asset', 'error');
+        }
+    }
+
+    function showToast(msg, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.className = 'toast ' + type;
+        // Force reflow for re-triggering animation
+        void toast.offsetWidth;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+</script>
+{% endblock %}
