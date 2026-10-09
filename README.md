@@ -40,7 +40,7 @@ LogRecon is a full-stack cybersecurity platform that combines real-time IP reput
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/your-username/automated-ir-tool.git
+git clone https://github.com/Anubhabcysec/automated-ir-tool.git
 cd automated-ir-tool
 ```
 
@@ -52,13 +52,13 @@ pip install -r requirements.txt
 ### 3. Create `.env` file
 Create a `.env` file in the root directory and configure your keys:
 ```env
-ABUSEIPDB_API_KEY=your_abuseipdb_api_key
-SHODAN_API_KEY=your_shodan_api_key
-GROQ_API_KEY=your_groq_api_key
-NVD_API_KEY=your_nvd_api_key
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-TELEGRAM_CHAT_ID=your_telegram_chat_id
-SECRET_KEY=your_secret_key
+ABUSEIPDB_API_KEY=abuseipdb_api_key
+SHODAN_API_KEY=shodan_api_key
+GROQ_API_KEY=groq_api_key
+NVD_API_KEY=nvd_api_key
+TELEGRAM_BOT_TOKEN=telegram_bot_token
+TELEGRAM_CHAT_ID=telegram_chat_id
+SECRET_KEY=secret_key
 ```
 
 ### 4. Run the application
