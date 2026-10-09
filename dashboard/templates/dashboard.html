@@ -259,10 +259,10 @@
         text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
     }
 
-    /* Horizontal Feature Cards */
+    /* Feature Cards 2-Column Grid */
     .feature-cards-stack {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
         gap: 16px;
         margin-bottom: 48px;
     }
@@ -325,12 +325,12 @@
 
     .feature-card-desc {
         font-size: 14px;
-        color: #b0a9c8;
+        color: #aaaaaa;
         line-height: 1.6;
     }
 
     .feature-card-arrow {
-        color: #e2ddf4;
+        color: #ffffff;
         font-size: 14px;
         font-weight: 600;
         white-space: nowrap;
@@ -403,6 +403,9 @@
     @media (max-width: 860px) {
         .stat-cards-row {
             grid-template-columns: repeat(2, 1fr);
+        }
+        .feature-cards-stack {
+            grid-template-columns: 1fr;
         }
         .hero-title {
             font-size: clamp(42px, 7vw, 56px);
@@ -603,24 +606,6 @@
             <span class="feature-card-arrow">Launch &rarr;</span>
         </a>
 
-        <!-- Card 6: AI Analysis with Evidence -->
-        <a href="/scan/ip" class="feature-card">
-            <div class="feature-card-content">
-                <div class="feature-card-icon">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 20h9"/>
-                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                        <line x1="2" y1="12" x2="6" y2="12"/>
-                        <line x1="2" y1="17" x2="5" y2="17"/>
-                    </svg>
-                </div>
-                <div>
-                    <div class="feature-card-title">AI Analysis with Evidence</div>
-                    <div class="feature-card-desc">Every AI finding is backed by cited evidence — specific CVE IDs, port numbers, and exact log lines. No unsupported claims, just transparent explainable intelligence.</div>
-                </div>
-            </div>
-            <span class="feature-card-arrow">Launch &rarr;</span>
-        </a>
 
         <!-- Card 7: Alert Center -->
         <a href="/alerts" class="feature-card">

@@ -14,13 +14,68 @@
     <!-- INPUT SECTION (single dark card) -->
     <div class="card" style="background: #0f0f0f; border: 1px solid #222222; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
         <div style="margin-bottom: 18px;">
-            <label for="correlateIp" style="display: block; font-size: 11px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">Target IP</label>
+            <label for="correlateIp" style="display: block; font-size: 11px; font-weight: 600; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">Target IP</label>
             <input id="correlateIp" type="text" class="input-field" placeholder="Target IP address..." autocomplete="off" style="background: #000000; border: 1px solid #222222; color: #ffffff; border-radius: 8px; padding: 12px 16px; font-size: 14px; font-family: 'JetBrains Mono', monospace; width: 100%; box-sizing: border-box;" />
         </div>
 
+        <!-- Log Input Tabs Header -->
         <div style="margin-bottom: 18px;">
-            <label for="correlateLog" style="display: block; font-size: 11px; font-weight: 600; color: #666666; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">Raw Log Content</label>
-            <textarea id="correlateLog" class="input-field" rows="15" placeholder="Paste log content to correlate against this IP scan..." style="background: #000000; border: 1px solid #222222; color: #ffffff; border-radius: 8px; padding: 14px 16px; font-size: 13px; font-family: 'JetBrains Mono', monospace; width: 100%; box-sizing: border-box; resize: vertical; line-height: 1.6;"></textarea>
+            <label style="display: block; font-size: 11px; font-weight: 600; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">Log Evidence Source</label>
+            <div style="display: flex; gap: 8px; border-bottom: 1px solid #1e1e1e; padding-bottom: 14px; margin-bottom: 16px; flex-wrap: wrap;">
+                <button type="button" id="tabUploadBtn" class="btn-secondary" style="font-size: 13px; padding: 7px 16px;" onclick="switchCorrelateTab('upload')">
+                    Upload File
+                </button>
+                <button type="button" id="tabPasteBtn" class="btn-primary" style="font-size: 13px; padding: 7px 16px;" onclick="switchCorrelateTab('paste')">
+                    Paste Text
+                </button>
+                <button type="button" id="tabLocalBtn" class="btn-secondary" style="font-size: 13px; padding: 7px 16px; display: inline-flex; align-items: center; gap: 6px;" onclick="switchCorrelateTab('local')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    Local System Logs
+                </button>
+            </div>
+
+            <!-- Tab 1: Upload File -->
+            <div id="tabUploadContent" style="display: none;">
+                <div id="correlateDropZone" style="border: 2px dashed #2a2a2a; border-radius: 8px; background: #0c0c0c; padding: 36px 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-bottom: 12px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <div style="font-size: 14px; color: #bbb; font-weight: 500; margin-bottom: 4px;">
+                        Drop your log file here or click to browse
+                    </div>
+                    <div style="font-size: 12px; color: #555; font-family: 'JetBrains Mono', monospace;">
+                        Supports .log, .txt, and .evtx files
+                    </div>
+                    <input type="file" id="correlateFileInput" accept=".log,.txt,.evtx" style="display: none;" onchange="handleCorrelateFileSelected(this.files)" />
+                </div>
+                <div id="correlateFileName" style="margin-top: 10px; font-size: 12px; color: #2f81f7; font-family: 'JetBrains Mono', monospace; display: none;"></div>
+            </div>
+
+            <!-- Tab 2: Paste Text -->
+            <div id="tabPasteContent" style="display: block;">
+                <textarea id="correlateLog" class="input-field" rows="15" placeholder="Paste log content to correlate against this IP scan..." style="background: #000000; border: 1px solid #222222; color: #ffffff; border-radius: 8px; padding: 14px 16px; font-size: 13px; font-family: 'JetBrains Mono', monospace; width: 100%; box-sizing: border-box; resize: vertical; line-height: 1.6;"></textarea>
+            </div>
+
+            <!-- Tab 3: Local System Logs -->
+            <div id="tabLocalContent" style="display: none;">
+                <div style="margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="font-size: 13px; color: #888888;">
+                        Discovered logs in standard system locations:
+                    </div>
+                    <button type="button" class="btn-secondary" style="font-size: 11px; padding: 4px 10px; font-family: 'JetBrains Mono', monospace;" onclick="fetchLocalLogs(true)">
+                        Refresh
+                    </button>
+                </div>
+                <div id="correlateLocalLogsContainer" style="display: flex; flex-direction: column; gap: 10px; min-height: 100px;">
+                    <div style="color: #666666; font-size: 13px; text-align: center; padding: 24px;">Scanning local system for logs...</div>
+                </div>
+            </div>
         </div>
 
         <button id="correlateBtn" type="button" class="btn-primary" onclick="runCorrelation()" style="width: 100%; background: #ffffff; color: #000000; font-weight: 600; font-size: 14px; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; transition: background 0.15s ease;">
@@ -168,6 +223,203 @@
         else if (v === 'HIGH') cls = 'badge-high';
         else if (v === 'MEDIUM') cls = 'badge-medium';
         return `<span class="risk-badge ${cls}">${v}</span>`;
+    }
+
+    let activeCorrelateTab = 'paste';
+    let localLogsLoaded = false;
+
+    function switchCorrelateTab(tab) {
+        activeCorrelateTab = tab;
+        const uploadBtn = document.getElementById('tabUploadBtn');
+        const pasteBtn = document.getElementById('tabPasteBtn');
+        const localBtn = document.getElementById('tabLocalBtn');
+        const uploadContent = document.getElementById('tabUploadContent');
+        const pasteContent = document.getElementById('tabPasteContent');
+        const localContent = document.getElementById('tabLocalContent');
+
+        uploadBtn.className = 'btn-secondary';
+        pasteBtn.className = 'btn-secondary';
+        if (localBtn) localBtn.className = 'btn-secondary';
+
+        uploadContent.style.display = 'none';
+        pasteContent.style.display = 'none';
+        if (localContent) localContent.style.display = 'none';
+
+        if (tab === 'upload') {
+            uploadBtn.className = 'btn-primary';
+            uploadContent.style.display = 'block';
+        } else if (tab === 'paste') {
+            pasteBtn.className = 'btn-primary';
+            pasteContent.style.display = 'block';
+        } else if (tab === 'local') {
+            if (localBtn) localBtn.className = 'btn-primary';
+            if (localContent) localContent.style.display = 'block';
+            if (!localLogsLoaded) {
+                fetchLocalLogs();
+            }
+        }
+    }
+
+    // Drag and drop setup for correlate
+    const correlateDropZone = document.getElementById('correlateDropZone');
+    const correlateFileInput = document.getElementById('correlateFileInput');
+
+    if (correlateDropZone && correlateFileInput) {
+        correlateDropZone.addEventListener('click', () => correlateFileInput.click());
+
+        correlateDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            correlateDropZone.style.borderColor = '#2f81f7';
+            correlateDropZone.style.background = '#10141a';
+        });
+
+        correlateDropZone.addEventListener('dragleave', () => {
+            correlateDropZone.style.borderColor = '#2a2a2a';
+            correlateDropZone.style.background = '#0c0c0c';
+        });
+
+        correlateDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            correlateDropZone.style.borderColor = '#2a2a2a';
+            correlateDropZone.style.background = '#0c0c0c';
+            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                correlateFileInput.files = e.dataTransfer.files;
+                handleCorrelateFileSelected(e.dataTransfer.files);
+            }
+        });
+    }
+
+    function handleCorrelateFileSelected(files) {
+        const nameEl = document.getElementById('correlateFileName');
+        if (files && files.length > 0) {
+            const file = files[0];
+            nameEl.style.display = 'block';
+            nameEl.textContent = 'Selected: ' + file.name + ' (' + (file.size / 1024).toFixed(1) + ' KB)';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('correlateLog').value = e.target.result;
+            };
+            reader.readAsText(file);
+        } else {
+            nameEl.style.display = 'none';
+        }
+    }
+
+    async function fetchLocalLogs(forceRefresh = false) {
+        const container = document.getElementById('correlateLocalLogsContainer');
+        if (!container) return;
+
+        container.innerHTML = '<div style="color: #888888; font-size: 13px; text-align: center; padding: 24px;">Scanning local system for logs...</div>';
+
+        try {
+            const res = await fetch('/api/local-logs');
+            if (!res.ok) {
+                container.innerHTML = '<div style="color: #f87171; font-size: 13px; text-align: center; padding: 16px;">Failed to fetch local log files.</div>';
+                return;
+            }
+            const logs = await res.json();
+            localLogsLoaded = true;
+
+            const validLogs = (logs || []).filter(l => l.type !== 'info' && l.path);
+
+            if (!validLogs || validLogs.length === 0) {
+                container.innerHTML = '<div style="color: #888888; font-size: 13px; text-align: center; padding: 28px; background: #0c0c0c; border: 1px dashed #222222; border-radius: 8px;">No local log files detected. Use Upload or Paste instead.</div>';
+                return;
+            }
+
+            let html = '';
+            validLogs.forEach((log) => {
+                const escapedPath = JSON.stringify(log.path);
+                const badgeColor = log.type === 'EVTX' ? 'badge-high' : 'badge-port';
+                html += `
+                    <div style="background: #0e0e0e; border: 1px solid #1c1c1c; border-radius: 8px; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+                        <div style="flex: 1; min-width: 220px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <span style="font-weight: 600; color: #ffffff; font-size: 14px; font-family: 'JetBrains Mono', monospace;">${escapeHtml(log.name)}</span>
+                                <span class="badge ${badgeColor}" style="font-size: 10px; padding: 2px 6px;">${escapeHtml(log.type)}</span>
+                            </div>
+                            <div style="font-size: 11px; color: #777777; font-family: 'JetBrains Mono', monospace; word-break: break-all;">
+                                ${escapeHtml(log.path)} &bull; ${log.size_kb} KB
+                            </div>
+                        </div>
+                        <div>
+                            <button type="button" class="btn-primary" style="font-size: 12px; padding: 6px 14px; font-weight: 600;" onclick='useLocalLog(${escapedPath}, this)'>
+                                Use This Log
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+
+        } catch (e) {
+            container.innerHTML = '<div style="color: #f87171; font-size: 13px; text-align: center; padding: 16px;">Error connecting to local log discovery service.</div>';
+        }
+    }
+
+    async function useLocalLog(path, btnEl) {
+        if (!path) return;
+
+        const ipInput = document.getElementById('correlateIp');
+        const ip = ipInput.value.trim();
+        if (!ip) {
+            alert('Please enter a target IP address first.');
+            ipInput.focus();
+            return;
+        }
+
+        const originalText = btnEl ? btnEl.textContent : '';
+        if (btnEl) {
+            btnEl.disabled = true;
+            btnEl.textContent = 'Loading...';
+            btnEl.style.opacity = '0.5';
+        }
+
+        try {
+            const res = await fetch('/api/analyze-local-log', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ path: path })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                throw new Error(err.error || 'Failed to read local log file.');
+            }
+
+            const data = await res.json();
+            const logLines = [];
+            if (data.suspicious_lines && data.suspicious_lines.length > 0) {
+                logLines.push(...data.suspicious_lines);
+            }
+            if (data.error_lines && data.error_lines.length > 0) {
+                logLines.push(...data.error_lines);
+            }
+            if (data.ip_addresses && data.ip_addresses.length > 0) {
+                logLines.push('Observed addresses: ' + data.ip_addresses.join(', '));
+            }
+
+            const logContent = logLines.length > 0 ? logLines.join('\n') : ('[INFO] Local log ingested: ' + path);
+            document.getElementById('correlateLog').value = logContent;
+
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.textContent = originalText;
+                btnEl.style.opacity = '1';
+            }
+
+            // Run correlation automatically
+            runCorrelation();
+
+        } catch (err) {
+            if (btnEl) {
+                btnEl.disabled = false;
+                btnEl.textContent = originalText;
+                btnEl.style.opacity = '1';
+            }
+            alert('Could not load log: ' + err.message);
+        }
     }
 
     function runCorrelation() {
