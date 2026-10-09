@@ -13,9 +13,18 @@
 
     <!-- INPUT SECTION (single dark card) -->
     <div class="card" style="background: #0f0f0f; border: 1px solid #222222; border-radius: 12px; padding: 24px; margin-bottom: 24px;">
+        <!-- Quick Target Helper Row -->
+        <div style="margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 11px; font-weight: 600; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'JetBrains Mono', monospace;">QUICK TARGET</span>
+            <button type="button" onclick="useMyLocalIp()" style="background: #111111; border: 1px solid #222222; color: #ffffff; border-radius: 8px; font-size: 12px; padding: 6px 14px; font-family: 'JetBrains Mono', monospace; cursor: pointer; transition: all 0.15s ease;">
+                Use My Local IP
+            </button>
+        </div>
+
         <div style="margin-bottom: 18px;">
             <label for="correlateIp" style="display: block; font-size: 11px; font-weight: 600; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; font-family: 'JetBrains Mono', monospace;">Target IP</label>
             <input id="correlateIp" type="text" class="input-field" placeholder="Target IP address..." autocomplete="off" style="background: #000000; border: 1px solid #222222; color: #ffffff; border-radius: 8px; padding: 12px 16px; font-size: 14px; font-family: 'JetBrains Mono', monospace; width: 100%; box-sizing: border-box;" />
+            <div id="quickTargetDetected" style="display: none; margin-top: 6px; font-size: 12px; color: #888888; font-family: 'JetBrains Mono', monospace;"></div>
         </div>
 
         <!-- Log Input Tabs Header -->
@@ -216,6 +225,35 @@
 
 {% block scripts %}
 <script>
+    async function useMyLocalIp() {
+        const detectedEl = document.getElementById('quickTargetDetected');
+        try {
+            if (detectedEl) {
+                detectedEl.style.display = 'block';
+                detectedEl.textContent = 'Detecting IP...';
+            }
+            const res = await fetch('/api/local_ip');
+            const data = await res.json();
+            const ip = data.ip;
+            const ipInput = document.getElementById('correlateIp');
+            if (ipInput && ip) {
+                ipInput.value = ip;
+            }
+            if (detectedEl) {
+                if (ip) {
+                    detectedEl.textContent = `Detected: ${ip}`;
+                } else {
+                    detectedEl.textContent = 'Could not detect IP';
+                }
+            }
+        } catch (err) {
+            console.error('Failed to get local IP:', err);
+            if (detectedEl) {
+                detectedEl.textContent = 'Failed to detect IP';
+            }
+        }
+    }
+
     function getRiskBadgeHtml(verdict) {
         const v = (verdict || 'LOW').toUpperCase();
         let cls = 'badge-low';
